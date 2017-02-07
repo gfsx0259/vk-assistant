@@ -1,116 +1,69 @@
-var request = require('request');
 var express = require('express');
-var vkAuth = require('vk-auth');
 var mongoose = require('mongoose');
 var hbs = require('express-handlebars');
 
 mongoose.connect('mongodb://localhost/vk-assistant');
 
-// Protected user login data
-var userCredentials = {
-    email: 'v8199@yandex.ru',
-    password: 'tartar777'
-};
+// Include config
+var Config = require(__dirname + '/config/main');
 
-var schema = new mongoose.Schema({
-    email: {type: String},
-    user_id: {type: Number},
-    token: {type: String},
-    exp: {type: Number},
-    date: {type: Date, default: Date.now}
-}, {collection: 'tokens'});
+// Include mongodb models
+var Token = require(__dirname + '/models/token').Token;
 
-var Token = mongoose.model('Token', schema);
+// Include services
+var vkClientClass = require(__dirname + '/services/vk-client').instance;
+var vkClientInstance = new vkClientClass(Config.application.id);
 
 var app = express();
 
 app.engine('handlebars', hbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-var config = {
-    app_id: '5859498'
-};
-
-var authInstance = vkAuth(config.app_id, 'messages');
 
 app.get('/', function (req, res) {
+    res.render('home');
+});
 
-    var method = 'messages.get';
 
-    // Trying to get token data from DB
-    fetchToken(userCredentials.email, function (err, tokenObject) {
-
-        tokenObject = tokenObject[0];
-
-        // If token data was fetched already
-        if (tokenObject) {
-            callApi(method, tokenObject, res);
-        } else {
-            authInstance.authorize(userCredentials.email, userCredentials.password, function (err, tokenParams) {
-                tokenParams['email'] = userCredentials.email;
-                // Save to db token collection
-                saveToken(tokenParams);
-                callApi(method, tokenParams, res);
-            });
-        }
+app.get('/msg', function (req, res) {
+    fetch('messages.get', function (data) {
+        res.render('msg', {
+            items: data
+        });
     });
 });
 
-/**
- * Make vk api request
- * @param method
- * @param tokenObject
- * @param res
- */
-function callApi(method, tokenObject, res) {
-    request.post(
-        'https://api.vk.com/method/' + method,
-        {
-            form: {
-                access_token: tokenObject.access_token,
-                count: 5
+app.get('/profile', function (req, res) {
+    fetch('users.get', function (data) {
+        res.render('profile', {
+            profile: data[0]
+        });
+    });
+});
+
+
+function fetch(method, cb) {
+    // Trying to get token data from DB
+    Token.findByEmail(Config.user.credentials.email, function (err, token) {
+        // If token data was fetched already
+        if (token) {
+            // set data for profile req
+            if (method == 'users.get') {
+                token['user_ids'] = token['user_id'];
+                token['fields'] = ['photo_200','city','verified'].join(',');
             }
-        },
-        function (error, response, body) {
-            if (!error && response.statusCode == 200) {
 
-                var items = JSON.parse(body).response;
+            vkClientInstance.fetch(method, token, cb);
+        } else {
+            vkClientInstance.getAuth().authorize(Config.user.credentials.email, Config.user.credentials.password, function (err, token) {
+                vkClientInstance.fetch(method, token, cb);
 
-                items.filter(function (value) {
-                    return typeof value == 'object';
-                });
-
-                res.render('home', {
-                    items: items
-                });
-            }
+                // Save to db token collection
+                token['email'] = Config.user.credentials.email;
+                Token.create(token);
+            });
         }
-    );
-}
-
-
-/**
- * Fetch token from db by email
- * @param email
- * @param callback
- */
-function fetchToken(email, callback) {
-    Token.collection.find({email: email}, {limit: 1}).toArray(callback);
-}
-
-
-/**
- * Save token to db
- * @param params
- */
-function saveToken(params) {
-    Token.collection.insert(params, onInsert);
-
-    function onInsert(err) {
-        if (!err) {
-            console.info('Token params were successfully stored.');
-        }
-    }
+    });
 }
 
 app.listen(3000, function () {
