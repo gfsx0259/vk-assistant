@@ -7,12 +7,12 @@ mongoose.connect('mongodb://localhost/vk-assistant');
 // Include config
 var Config = require(__dirname + '/config/main');
 
-// Include mongodb models
-var Token = require(__dirname + '/models/token').Token;
-
 // Include services
-var vkClientClass = require(__dirname + '/services/vk-client').instance;
-var vkClientInstance = new vkClientClass(Config.application.id);
+var vkAuthorizingServiceInstance = require(__dirname + '/services/vk/authorizing');
+var vkRequestBuilderService = require(__dirname + '/services/vk/request/builder');
+
+// Initialize services
+var vkRequestBuilderServiceInstance = new vkRequestBuilderService();
 
 var app = express();
 
@@ -26,45 +26,31 @@ app.get('/', function (req, res) {
 
 
 app.get('/msg', function (req, res) {
-    fetch('messages.get', function (data) {
-        res.render('msg', {
-            items: data
+    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+        if (err) return;
+
+        vkRequestBuilderServiceInstance.fetch('messages.get', token, function (err, items) {
+            res.render('msg', {
+                items: items
+            });
         });
     });
 });
 
 app.get('/profile', function (req, res) {
-    fetch('users.get', function (data) {
-        res.render('profile', {
-            profile: data[0]
+    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+        if (err) return;
+
+        token['fields'] = ['photo_200', 'city', 'verified'].join(',');
+
+        vkRequestBuilderServiceInstance.fetch('users.get', token, function (err, data) {
+            res.render('profile', {
+                profile: data[0]
+            });
         });
     });
 });
 
-
-function fetch(method, cb) {
-    // Trying to get token data from DB
-    Token.findByEmail(Config.user.credentials.email, function (err, token) {
-        // If token data was fetched already
-        if (token) {
-            // set data for profile req
-            if (method == 'users.get') {
-                token['user_ids'] = token['user_id'];
-                token['fields'] = ['photo_200','city','verified'].join(',');
-            }
-
-            vkClientInstance.fetch(method, token, cb);
-        } else {
-            vkClientInstance.getAuth().authorize(Config.user.credentials.email, Config.user.credentials.password, function (err, token) {
-                vkClientInstance.fetch(method, token, cb);
-
-                // Save to db token collection
-                token['email'] = Config.user.credentials.email;
-                Token.create(token);
-            });
-        }
-    });
-}
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!')
