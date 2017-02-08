@@ -13,7 +13,10 @@ vkRequestBuilderService.prototype = {
             {
                 form: {
                     access_token: token.access_token,
-                    fields: token.fields
+                    fields: token.fields,
+                    offset: token.offset || '',
+                    user_id: token.user_id || '',
+                    message: token.message || ''
                 }
             },
             function (error, response, body) {

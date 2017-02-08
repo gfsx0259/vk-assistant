@@ -52,6 +52,30 @@ app.get('/profile', function (req, res) {
 });
 
 
+app.get('/dialogs', function (req, res) {
+    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+        if (err) return;
+        token['offset'] = 20;
+        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, function (err, items) {
+            res.render('dialogs', {
+                items: items
+            });
+        });
+    });
+});
+
+app.get('/send', function (req, res) {
+    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+        if (err) return;
+        token['message'] = req.query.msg || 'test message';
+        token['user_id'] = '407698507';
+        vkRequestBuilderServiceInstance.fetch('messages.send', token, function (err, items) {
+            res.send(items.toString());
+    });
+    });
+});
+
+
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!')
 });
