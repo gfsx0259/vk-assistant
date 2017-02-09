@@ -1,4 +1,5 @@
 var request = require('request');
+var _ = require('lodash');
 
 /**
  *
@@ -7,17 +8,23 @@ var request = require('request');
 var vkRequestBuilderService = function () {};
 
 vkRequestBuilderService.prototype = {
-    fetch: function (method, token, callback) {
+    fetch: function (method, token, params, callback) {
+
+        var requestParams = {};
+        var schema = require(__dirname + '/schema');
+
+        schema[method].forEach(function (value) {
+            if (params[value]) {
+                requestParams[value] = params[value];
+            }
+        });
+
+        requestParams = _.merge(requestParams, {access_token: token.access_token});
+
         request.post(
             'https://api.vk.com/method/' + method,
             {
-                form: {
-                    access_token: token.access_token,
-                    fields: token.fields,
-                    offset: token.offset || '',
-                    user_id: token.user_id || '',
-                    message: token.message || ''
-                }
+                form: requestParams
             },
             function (error, response, body) {
 

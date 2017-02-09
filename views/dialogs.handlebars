@@ -1,7 +1,14 @@
 <ul>
 {{#each items}}
-   <li>{{body}}</li>
-    <li>{{uid}}</li>
+   <li>
+       <p>{{body}}</p>
+       <p>{{uid}}</p>
+       <form action="/send" method="get">
+           <input name="msg"/>
+           <input name="user_id" type="hidden" value="{{uid}}"/>
+           <input type="submit"/>
+       </form>
+   </li>
 {{/each}}
 </ul>
 

@@ -28,21 +28,21 @@ vkAuthorizingService.prototype = {
      */
     actualizeToken: function (cb) {
         Token.findByEmail(Config.user.credentials.email, function (err, token) {
-
             // Самостоятельно проверяем токен
             if (token && token.ip == ip.address() && parseInt(token.date) + (token.expires_in * 1000) > Date.now()) {
-                cb(false, token);
+                cb(null, token);
             } else {
                 this.getAuth().authorize(Config.user.credentials.email, Config.user.credentials.password, function (err, token) {
 
                     // Save to db token collection
-                    token['email'] = Config.user.credentials.email;
-                    token['ip'] = ip.address();
+                    token.ip = ip.address();
+                    token.date = Date.now();
+                    token.email = Config.user.credentials.email;
 
-                    // TODO Корректно обновлять токен, не создавать новый
-                    Token.create(token, function(err) {
-                        if (!err) {
-                            cb(token);
+                    Token.findOneAndUpdate(
+                        {email: token['email']}, token, {upsert: true}, function(err, doc){
+                        if(!err){
+                            cb(null, token);
                         }
                     });
                 });

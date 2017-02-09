@@ -19,17 +19,15 @@ var app = express();
 app.engine('handlebars', hbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-
 app.get('/', function (req, res) {
     res.render('home');
 });
-
 
 app.get('/msg', function (req, res) {
     vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
         if (err) return;
 
-        vkRequestBuilderServiceInstance.fetch('messages.get', token, function (err, items) {
+        vkRequestBuilderServiceInstance.fetch('messages.get', token, {}, function (err, items) {
             res.render('msg', {
                 items: items
             });
@@ -40,14 +38,15 @@ app.get('/msg', function (req, res) {
 app.get('/profile', function (req, res) {
     vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
         if (err) return;
-
-        token['fields'] = ['photo_200', 'city', 'verified'].join(',');
-
-        vkRequestBuilderServiceInstance.fetch('users.get', token, function (err, data) {
-            res.render('profile', {
-                profile: data[0]
+        vkRequestBuilderServiceInstance.fetch(
+            'users.get',
+            token,
+            {fields: ['photo_200', 'city', 'verified'].join(',')},
+            function (err, data) {
+                res.render('profile', {
+                    profile: data[0]
+                });
             });
-        });
     });
 });
 
@@ -55,8 +54,9 @@ app.get('/profile', function (req, res) {
 app.get('/dialogs', function (req, res) {
     vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
         if (err) return;
-        token['offset'] = 20;
-        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, function (err, items) {
+
+        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 20}, function (err, items) {
+            console.log(items);
             res.render('dialogs', {
                 items: items
             });
@@ -64,12 +64,17 @@ app.get('/dialogs', function (req, res) {
     });
 });
 
+
 app.get('/send', function (req, res) {
     vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
         if (err) return;
-        token['message'] = req.query.msg || 'test message';
-        token['user_id'] = '407698507';
-        vkRequestBuilderServiceInstance.fetch('messages.send', token, function (err, items) {
+
+        var params = {
+            message:  req.query.msg || 'empty msg',
+            user_id: req.query.user_id
+        };
+
+        vkRequestBuilderServiceInstance.fetch('messages.send', token, params, function (err, items) {
             res.send(items.toString());
     });
     });
