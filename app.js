@@ -6,10 +6,17 @@ mongoose.connect('mongodb://localhost/vk-assistant');
 
 var app = express();
 
-app.engine('hbs', hbs({defaultLayout: 'main'}));
-app.set('view engine', 'hbs');
+app.engine('hbs', hbs(
+    {
+        defaultLayout: 'main',
+        layoutsDir: './app/views/layouts'}
+    ));
 
-var ServicesController = require('./controllers/services');
+app.set('view engine', 'hbs');
+app.set('views', './app/views');
+
+
+var ServicesController = require('./app/controllers/services');
 
 app.get('/', ServicesController.getHandler('home'));
 app.get('/msg', ServicesController.getHandler('msg'));

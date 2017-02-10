@@ -11,7 +11,7 @@ vkRequestBuilderService.prototype = {
     fetch: function (method, token, params, callback) {
 
         var requestParams = {};
-        var schema = require(__dirname + '/schema');
+        var schema = require('./schema');
 
         schema[method].forEach(function (value) {
             if (params[value]) {
