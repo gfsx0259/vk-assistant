@@ -1,9 +1,9 @@
-var ip = require("ip");
 var vkAuth = require('vk-auth');
+var ip = require("ip");
 
 // Include config
-var Token = require(__dirname + '/../../models/token').Token;
-var Config = require(__dirname + '/../../config/main');
+var Token = require('./../../models/token').Token;
+var Config = require('./../../config/main');
 
 /**
  *

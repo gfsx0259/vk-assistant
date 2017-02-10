@@ -4,82 +4,18 @@ var hbs = require('express-handlebars');
 
 mongoose.connect('mongodb://localhost/vk-assistant');
 
-// Include config
-var Config = require(__dirname + '/config/main');
-
-// Include services
-var vkAuthorizingServiceInstance = require(__dirname + '/services/vk/authorizing');
-var vkRequestBuilderService = require(__dirname + '/services/vk/request/builder');
-
-// Initialize services
-var vkRequestBuilderServiceInstance = new vkRequestBuilderService();
-
 var app = express();
 
-app.engine('handlebars', hbs({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
+app.engine('hbs', hbs({defaultLayout: 'main'}));
+app.set('view engine', 'hbs');
 
-app.get('/', function (req, res) {
-    res.render('home');
-});
+var ServicesController = require('./controllers/services');
 
-app.get('/msg', function (req, res) {
-    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
-        if (err) return;
-
-        vkRequestBuilderServiceInstance.fetch('messages.get', token, {}, function (err, items) {
-            res.render('msg', {
-                items: items
-            });
-        });
-    });
-});
-
-app.get('/profile', function (req, res) {
-    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
-        if (err) return;
-        vkRequestBuilderServiceInstance.fetch(
-            'users.get',
-            token,
-            {fields: ['photo_200', 'city', 'verified'].join(',')},
-            function (err, data) {
-                res.render('profile', {
-                    profile: data[0]
-                });
-            });
-    });
-});
-
-
-app.get('/dialogs', function (req, res) {
-    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
-        if (err) return;
-
-        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 20}, function (err, items) {
-            console.log(items);
-            res.render('dialogs', {
-                items: items
-            });
-        });
-    });
-});
-
-
-app.get('/send', function (req, res) {
-    vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
-        if (err) return;
-
-        var params = {
-            message:  req.query.msg || 'empty msg',
-            user_id: req.query.user_id
-        };
-
-        vkRequestBuilderServiceInstance.fetch('messages.send', token, params, function (err, items) {
-            res.send(items.toString());
-    });
-    });
-});
-
+app.get('/', ServicesController.getHandler('home'));
+app.get('/msg', ServicesController.getHandler('msg'));
+app.get('/profile', ServicesController.getHandler('profile'));
+app.get('/dialogs', ServicesController.getHandler('dialogs'));
+app.get('/send', ServicesController.getHandler('send'));
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!')
