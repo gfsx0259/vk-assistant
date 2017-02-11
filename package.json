@@ -9,12 +9,13 @@
   "author": "Konstantin Popov",
   "license": "BSD-2-Clause",
   "dependencies": {
+    "async": "^2.1.4",
     "express": "~4.14.1",
     "express-handlebars": "~3.0.0",
     "ip": "^1.1.4",
+    "lodash": "latest",
     "mongoose": "^4.8.1",
     "request": "~2.79.0",
-    "vk-auth": "~1.0.6",
-    "lodash": "latest"
+    "vk-auth": "~1.0.6"
   }
 }

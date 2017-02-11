@@ -1,3 +1,6 @@
+var async = require('async');
+var Contact = require('./../models/contact').Contact;
+
 // Include services
 var vkAuthorizingServiceInstance = require('./../services/vk/authorizing');
 var vkRequestBuilderService = require('./../services/vk/request/builder');
@@ -26,9 +29,75 @@ var servicesList = {
             });
     },
     dialogs: function (req, res, token) {
-        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 20}, function (err, items) {
-            res.render('dialogs', {
-                items: items
+
+        var usersInfo = {};
+
+        var mapUserInfoToDialog = function (value) {
+            value['info'] = usersInfo[value.uid];
+            return value;
+        };
+
+        vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 0}, function (err, items) {
+
+            var needFetchedUserIds = [];
+            var fetchUsersInfoCalls = [];
+
+            items.forEach(function (dialogItem) {
+                fetchUsersInfoCalls.push(function (callback) {
+                        Contact.findOne({user_id: dialogItem.uid}, function (err, contact) {
+                            if (err) throw 'An error occurs while reading contacts from DB';
+
+                            // Если данные удалось получить из БД
+                            if (contact) {
+                                usersInfo[dialogItem.uid] = contact;
+                            } else {
+                                // Если не удалось получить данные по контакту из базы
+                                needFetchedUserIds.push(dialogItem.uid);
+                            }
+
+                            callback(null, dialogItem.uid);
+                        });
+                    }
+                )
+            });
+
+            async.parallel(fetchUsersInfoCalls, function (err, result) {
+                // Если необходим запрос для получения данных пользователей
+                if (needFetchedUserIds.length) {
+                    vkRequestBuilderServiceInstance.fetch(
+                        'users.get', token, {
+                            user_ids: needFetchedUserIds.join(','),
+                            fields: ['photo_200', 'city', 'verified'].join(',')
+                        },
+                        function (err, data) {
+                            var updateContactsCall = [];
+
+                            data.forEach(function (userData) {
+                                updateContactsCall.push(function (callback) {
+                                    usersInfo[userData.uid] = userData;
+                                    Contact.findOneAndUpdate(
+                                        {user_id: userData.uid}, userData, {upsert: true}, function (err, doc) {
+                                            if (!err) {
+                                                callback(null, userData);
+                                            }
+                                        });
+                                });
+                            });
+
+                            async.parallel(updateContactsCall, function (err, result) {
+                                if (err) throw 'An error occurs while updating contact in DB';
+
+                                res.render('dialogs', {
+                                    items: items.map(mapUserInfoToDialog)
+                                });
+                            });
+                        });
+                } else {
+                    // Если данные для всех пользователей удалось получить из БД
+                    res.render('dialogs', {
+                        items: items.map(mapUserInfoToDialog)
+                    });
+                }
             });
         });
     },
