@@ -10,11 +10,11 @@ var vkRequestBuilderServiceInstance = new vkRequestBuilderService();
 
 var servicesList = {
     home: function (req, res) {
-        res.render('home');
+        res.render('services/home');
     },
     msg: function (req, res, token) {
         vkRequestBuilderServiceInstance.fetch('messages.get', token, {}, function (err, items) {
-            res.render('msg', {
+            res.render('services/msg', {
                 items: items
             });
         });
@@ -23,7 +23,7 @@ var servicesList = {
         vkRequestBuilderServiceInstance.fetch(
             'users.get', token, {fields: ['photo_200', 'city', 'verified'].join(',')},
             function (err, data) {
-                res.render('profile', {
+                res.render('services/profile', {
                     profile: data[0]
                 });
             });
@@ -87,14 +87,14 @@ var servicesList = {
                             async.parallel(updateContactsCall, function (err, result) {
                                 if (err) throw 'An error occurs while updating contact in DB';
 
-                                res.render('dialogs', {
+                                res.render('services/dialogs', {
                                     items: items.map(mapUserInfoToDialog)
                                 });
                             });
                         });
                 } else {
                     // Если данные для всех пользователей удалось получить из БД
-                    res.render('dialogs', {
+                    res.render('services/dialogs', {
                         items: items.map(mapUserInfoToDialog)
                     });
                 }

@@ -1,14 +1,17 @@
 <ul>
 {{#each items}}
    <li>
+       <div class="item" style="border:1px solid black;margin-bottom:10px;">
+       <img src="{{info.photo_200}}"/>
        <p>{{body}}</p>
        <p>{{uid}}</p>
-       <img src="{{info.photo_200}}"/>
-       <form action="/send" method="get">
+       <p>{{info.first_name}} {{info.last_name}}</p>
+       <form action="/services/send" method="get">
            <input name="msg"/>
            <input name="user_id" type="hidden" value="{{uid}}"/>
            <input type="submit"/>
        </form>
+       </div>
    </li>
 {{/each}}
 </ul>

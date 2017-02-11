@@ -35,7 +35,7 @@ vkRequestBuilderService.prototype = {
                     body = JSON.parse(body);
                     // Check auth error
                     if (!body.error) {
-                        callback(false, body.response.filter(function (value) { return typeof value == 'object' }));
+                        callback(false, Array.isArray(body.response) ? body.response.filter(function (value) { return typeof value == 'object' }) : body.response);
                     } else {
                         callback(true);
                     }
