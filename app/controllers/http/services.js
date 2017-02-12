@@ -1,9 +1,9 @@
 var async = require('async');
-var Contact = require('./../models/contact').Contact;
+var Contact = require('./../../models/contact').Contact;
 
 // Include services
-var vkAuthorizingServiceInstance = require('./../services/vk/authorizing');
-var vkRequestBuilderService = require('./../services/vk/request/builder');
+var vkAuthorizingServiceInstance = require('./../../services/vk/authorizing');
+var vkRequestBuilderService = require('./../../services/vk/request/builder');
 
 // Initialize services
 var vkRequestBuilderServiceInstance = new vkRequestBuilderService();

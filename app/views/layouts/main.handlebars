@@ -3,8 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>Example App</title>
+    <script type="text/javascript" src="/js/lib/jquery-3.1.1.min.js"></script>
+
 </head>
+<script src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/js/app/app.js"></script>
 <body>
+<input type="button" id="send" value="Отправить">
 <p>{{user.username}}</p>
 <nav>
     <li><a href="/">Главная</a></li>
