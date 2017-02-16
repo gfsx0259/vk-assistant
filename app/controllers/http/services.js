@@ -14,16 +14,14 @@ var servicesList = {
     },
     msg: function (req, res, token) {
         vkRequestBuilderServiceInstance.fetch('messages.get', token, {}, function (err, items) {
-            res.render('services/msg', {
-                items: items
-            });
+            res.json({ items: items });
         });
     },
     profile: function (req, res, token) {
         vkRequestBuilderServiceInstance.fetch(
             'users.get', token, {fields: ['photo_200', 'city', 'verified'].join(',')},
             function (err, data) {
-                res.render('services/profile', {
+                res.json({
                     profile: data[0]
                 });
             });
@@ -63,7 +61,13 @@ var servicesList = {
 
             async.parallel(fetchUsersInfoCalls, function (err, result) {
                 // Если необходим запрос для получения данных пользователей
-                if (needFetchedUserIds.length) {
+
+                var ContactsHasAdditionalData = new Promise(function (resolve, reject) {
+
+                    if (!needFetchedUserIds.length) {
+                        resolve(items);
+                    }
+
                     vkRequestBuilderServiceInstance.fetch(
                         'users.get', token, {
                             user_ids: needFetchedUserIds.join(','),
@@ -86,18 +90,15 @@ var servicesList = {
 
                             async.parallel(updateContactsCall, function (err, result) {
                                 if (err) throw 'An error occurs while updating contact in DB';
-
-                                res.render('services/dialogs', {
-                                    items: items.map(mapUserInfoToDialog)
-                                });
+                                resolve(items);
                             });
                         });
-                } else {
-                    // Если данные для всех пользователей удалось получить из БД
-                    res.render('services/dialogs', {
-                        items: items.map(mapUserInfoToDialog)
-                    });
-                }
+
+                });
+
+                ContactsHasAdditionalData.then(function (items) {
+                    res.json({items: items.map(mapUserInfoToDialog)});
+                })
             });
         });
     },

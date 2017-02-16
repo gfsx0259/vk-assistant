@@ -31,11 +31,36 @@ vkRequestBuilderService.prototype = {
             },
             function (error, response, body) {
                 // If response is correct
+                console.log(body);
                 if (!error && response.statusCode == 200) {
                     body = JSON.parse(body);
                     // Check auth error
                     if (!body.error) {
                         callback(false, Array.isArray(body.response) ? body.response.filter(function (value) { return typeof value == 'object' }) : body.response);
+                    } else {
+                        callback(true);
+                    }
+                } else {
+                    throw 'An error occurred during the execution of the API request'
+                }
+            }
+        );
+    },
+    fetchLongPull: function (params, callback) {
+        return false;
+        request.post(
+            'http://' + params['server'],
+            {
+                form: params
+            },
+            function (error, response, body) {
+                console.log(error);
+                // If response is correct
+                if (!error) {
+                    body = JSON.parse(body);
+                    // Check auth error
+                    if (!body.error) {
+                        callback(false, body);
                     } else {
                         callback(true);
                     }

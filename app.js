@@ -1,9 +1,13 @@
+process.env.NODE_ENV = 'development';
+
 var express = require('express');
 var passport = require('passport');
 
 var User = require('./app/models/user').User;
 
 var app = express();
+
+app.set('json spaces', 40);
 
 // Set up the Session middleware using a MongoDB session store
 expressSession = require("express-session");
@@ -18,7 +22,11 @@ var sessionMiddleware = expressSession({
 
 app.use(sessionMiddleware);
 
-app.use(express.static('public'));
+app.use(express.static('public/js/dist'));
+app.use(express.static('public/js/lib'));
+
+app.use('/node_modules', express.static(__dirname + '/node_modules'));
+
 
 // init middleware
 var bootstrap = require('./app/bootstrap');
