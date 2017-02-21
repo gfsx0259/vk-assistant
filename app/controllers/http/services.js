@@ -17,6 +17,16 @@ var servicesList = {
             res.json({ items: items });
         });
     },
+    photos: function (req, res, token) {
+
+        var params = {
+            owner_id: req.query.owner_id
+        };
+
+        vkRequestBuilderServiceInstance.fetch('photos.getAll', token, params, function (err, items) {
+            res.json({ items: items });
+        });
+    },
     profile: function (req, res, token) {
         vkRequestBuilderServiceInstance.fetch(
             'users.get', token, {fields: ['photo_200', 'city', 'verified'].join(',')},

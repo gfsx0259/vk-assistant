@@ -24,6 +24,8 @@ vkRequestBuilderService.prototype = {
         });
 
         requestParams = _.merge(requestParams, {access_token: token.access_token});
+
+        console.log(method);
         request.post(
             'https://api.vk.com/method/' + method,
             {

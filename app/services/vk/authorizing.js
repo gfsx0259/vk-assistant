@@ -20,7 +20,7 @@ vkAuthorizingService.prototype = {
      * @returns {*}
      */
     getAuth: function (scopes) {
-        return vkAuth(this.appId, scopes || ['messages']);
+        return vkAuth(this.appId, scopes || ['messages', 'photos']);
     },
     /**
      * Вызывает callback, в качестве параметра передаёт токен
@@ -33,7 +33,8 @@ vkAuthorizingService.prototype = {
                 cb(null, token);
             } else {
                 this.getAuth().authorize(Config.user.credentials.email, Config.user.credentials.password, function (err, token) {
-
+console.log(arguments);
+console.log('try');
                     // Save to db token collection
                     token.ip = ip.address();
                     token.date = Date.now();

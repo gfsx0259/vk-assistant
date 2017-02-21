@@ -55,22 +55,11 @@ app.use(function(req,res,next){
     next();
 });
 
-var LocalStrategy = require('passport-local').Strategy;
-passport.use(new LocalStrategy(
-    function(username, password, done) {
-        User.findOne({ username : username},function(err, user){
-            return err
-                ? done(err)
-                : user
-                    ? password === user.password
-                        ? done(null, user)
-                        : done(null, false, { message: 'Incorrect password.' })
-                    : done(null, false, { message: 'Incorrect username.' });
-        });
-    }
-));
+
 
 passport.serializeUser(function(user, done) {
+    console.log('ddddd');
+
     done(null, user);
 });
 
@@ -81,13 +70,6 @@ passport.deserializeUser(function(id, done) {
             : done(null, user);
     });
 });
-
-var auth = passport.authenticate(
-    'local', {
-        successRedirect: '/services',
-        failureRedirect: '/user/login'
-    }
-);
 
 var mustBeAuthenticated = function (req, res, next) {
     req.isAuthenticated() ? next() : res.redirect('/user/login');
@@ -105,7 +87,7 @@ var UsersController = require('./app/controllers/http/users');
 // authentication form page
 app.get('/user/login', UsersController.getHandler('login'));
 // process authentication form
-app.post('/user/login', auth);
+
 app.get('/user/logout', UsersController.getHandler('logout'));
 app.get('/user/reg', UsersController.getHandler('regForm'));
 app.post('/user/reg', UsersController.getHandler('regProcess'));
@@ -117,6 +99,8 @@ app.get('/services/msg', ServicesController.getHandler('msg'));
 app.get('/services/profile', ServicesController.getHandler('profile'));
 app.get('/services/dialogs', ServicesController.getHandler('dialogs'));
 app.get('/services/send', ServicesController.getHandler('send'));
+
+app.get('/services/photos', ServicesController.getHandler('photos'));
 
 http.listen(3000, function () {
     console.log('Example app listening on port 3000!')

@@ -2,9 +2,66 @@ var vkAuthorizingServiceInstance = require('./../../services/vk/authorizing');
 var vkRequestBuilderService = require('./../../services/vk/request/builder');
 var vkRequestBuilderServiceInstance = new vkRequestBuilderService();
 
+var passport = require('passport');
+
+passport.serializeUser(function(user, done) {
+    done(null, user);
+});
+
+passport.deserializeUser(function(id, done) {
+    User.findById(id, function(err, user){
+        err
+            ? done(err)
+            : done(null, user);
+    });
+});
+
+var User = require('../../models/user').User;
+
+var LocalStrategy = require('../../middleware/passport/strategy');
+    passport.use(new LocalStrategy(
+        {},
+    function(username, password, done, socket) {
+        User.findOne({ username : username},function(err, user){
+            return err
+                ? done(err, null, null, socket)
+                : user
+                    ? password === user.password
+                        ? done(null, user, null, socket)
+                        : done(null, false, { message: 'Incorrect password.' }, socket)
+                    : done(null, false, { message: 'Incorrect username.' }, socket);
+        });
+    }
+));
+
+
+
+
 module.exports = {
   connection: function (socket) {
       console.log('user connected');
+
+      socket.on('login', function (params) {
+
+          params.socket = socket;
+
+          passport.authenticate('websocket')(params);
+      });
+
+
+      socket.on('logout', function () {
+
+          console.warn('server logout');
+
+          socket.request.session.passport  = {};
+          socket.request.session.save();
+
+          socket.emit('unauthorize', {
+              result: true
+          })
+      });
+
+
       if (socket.request.session.passport && socket.request.session.passport.user) {
           var user = socket.request.session.passport.user;
 
