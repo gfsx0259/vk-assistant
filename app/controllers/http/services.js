@@ -20,11 +20,33 @@ var servicesList = {
     photos: function (req, res, token) {
 
         var params = {
-            owner_id: req.query.owner_id
+            owner_id: req.query.owner_id,
+            count: 200
         };
 
         vkRequestBuilderServiceInstance.fetch('photos.getAll', token, params, function (err, items) {
             res.json({ items: items });
+        });
+    },
+    setLike: function (req, res, token) {
+
+        const ownerId = req.body.owner_id;
+
+        let setLikeCalls = [];
+
+        req.body.pids.map(function(pid) {
+            setLikeCalls.push(function(callback) {
+                setTimeout(function(){
+                    vkRequestBuilderServiceInstance.fetch('likes.add', token, {owner_id: ownerId, item_id: pid, type: 'photo'}, function (err, result) {
+                        callback(null);
+                    });
+                }, 2000);
+            });
+        });
+
+        async.waterfall(setLikeCalls, function (err, result) {
+            if (err) throw 'An error occurs while set likes processing';
+            res.json({ status: 'success' });
         });
     },
     profile: function (req, res, token) {

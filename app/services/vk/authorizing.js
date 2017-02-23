@@ -20,7 +20,7 @@ vkAuthorizingService.prototype = {
      * @returns {*}
      */
     getAuth: function (scopes) {
-        return vkAuth(this.appId, scopes || ['messages', 'photos']);
+        return vkAuth(this.appId, scopes || ['messages', 'photos', 'wall']);
     },
     /**
      * Вызывает callback, в качестве параметра передаёт токен

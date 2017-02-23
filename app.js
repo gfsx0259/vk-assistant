@@ -99,6 +99,7 @@ app.get('/services/msg', ServicesController.getHandler('msg'));
 app.get('/services/profile', ServicesController.getHandler('profile'));
 app.get('/services/dialogs', ServicesController.getHandler('dialogs'));
 app.get('/services/send', ServicesController.getHandler('send'));
+app.post('/services/setLike', ServicesController.getHandler('setLike'));
 
 app.get('/services/photos', ServicesController.getHandler('photos'));
 

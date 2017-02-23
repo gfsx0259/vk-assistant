@@ -1,3 +1,5 @@
+var User = require('../../models/user').User;
+
 var actions = {
     login: function(req, res) {
         res.render('user/login');

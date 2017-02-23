@@ -1,6 +1,6 @@
 import React from 'react'
 import { render } from 'react-dom'
-import { Router, browserHistory } from 'react-router'
+import { Router, hashHistory } from 'react-router'
 
 const rootRoute = {
     childRoutes: [ {
@@ -11,17 +11,14 @@ const rootRoute = {
             require('./routes/Messages'),
             require('./routes/Profile'),
             require('./routes/Login'),
-            {
-                path: 'photos(/:uid)',
-                component: require('./routes/Photos'),
-            }
+            require('./routes/Photos')
         ]
     } ]
 }
 
 render((
     <Router
-        history={browserHistory}
+        history={hashHistory}
         routes={rootRoute}
     />
 ), document.getElementById('app'))
