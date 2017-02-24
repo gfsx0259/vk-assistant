@@ -8,7 +8,12 @@
 </head>
 <script src="/socket.io/socket.io.js"></script>
 <body>
+<script type="text/javascript">
+    // make sure to use triple brackets
+    var user = {{{userJson}}};
+</script>
 <div id="app" />
+
 <script type="text/javascript" src="/index.js"></script>
 <input type="button" id="send" value="Отправить">
 <p>{{user.username}}</p>

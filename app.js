@@ -51,7 +51,14 @@ app.use(passport.session());
 
 // pass user data to views
 app.use(function(req,res,next){
-    res.locals.user = req.user;
+
+    var user = {
+        name: req.user ? req.user.username : '',
+        authorized: req.user ? true : false
+    };
+
+    res.locals.user  = user;
+    res.locals.userJson = JSON.stringify(res.locals.user);
     next();
 });
 
@@ -72,7 +79,7 @@ passport.deserializeUser(function(id, done) {
 });
 
 var mustBeAuthenticated = function (req, res, next) {
-    req.isAuthenticated() ? next() : res.redirect('/user/login');
+    req.isAuthenticated() ? next() : res.json({status: 'err', msg: 'authentication is required for requested action'});
 };
 
 app.all('/services', mustBeAuthenticated);

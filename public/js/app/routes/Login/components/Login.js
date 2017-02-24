@@ -1,5 +1,4 @@
-import React, { Component } from 'react'
-import axios from 'axios';
+import React, {Component} from 'react'
 
 import auth from '../../../services/auth'
 
@@ -11,18 +10,20 @@ class Login extends Component {
             error: false
         };
     }
+
     handleSubmit(event) {
-        event.preventDefault()
+        event.preventDefault();
 
+        const email = this.refs.email.value;
+        const pass = this.refs.pass.value;
 
-        const email = this.refs.email.value
-        const pass = this.refs.pass.value
-        console.log(email, pass);
         auth.login(email, pass, (loggedIn) => {
-            if (!loggedIn)
-                return this.setState({ error: true })
 
-            const { location } = this.props
+            if (!loggedIn) {
+                return this.setState({error: true});
+            }
+
+            const {location} = this.props;
 
             if (location.state && location.state.nextPathname) {
                 this.props.router.replace(location.state.nextPathname)
@@ -35,8 +36,8 @@ class Login extends Component {
     render() {
         return (
             <form onSubmit={this.handleSubmit.bind(this)}>
-                <label><input ref="email" placeholder="email" defaultValue="joe@example.com" /></label>
-                <label><input ref="pass" placeholder="password" /></label> (hint: password1)<br />
+                <label><input ref="email" placeholder="email" defaultValue="joe@example.com"/></label>
+                <label><input ref="pass" placeholder="password"/></label> (hint: password1)<br />
                 <button type="submit">login</button>
                 {this.state.error && (
                     <p>Bad login information</p>
@@ -46,4 +47,4 @@ class Login extends Component {
     }
 }
 
-module.exports = Login
+module.exports = Login;

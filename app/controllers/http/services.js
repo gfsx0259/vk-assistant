@@ -21,7 +21,8 @@ var servicesList = {
 
         var params = {
             owner_id: req.query.owner_id,
-            count: 200
+            count: 200,
+            offset:0
         };
 
         vkRequestBuilderServiceInstance.fetch('photos.getAll', token, params, function (err, items) {

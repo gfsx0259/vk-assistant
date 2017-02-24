@@ -2,10 +2,19 @@ var socket = require('./socket');
 
 module.exports = {
     login(email, pass, cb) {
+
+        if (user.authorized) {
+            this.onChange(true, user.name);
+            return
+        }
+
         doLogin(email, pass, (res) => {
             if (res.result) {
 
-                localStorage.user = res.user.username;
+                user = {
+                    name: res.user.username,
+                    authorized: true
+                };
 
                 if (cb) cb(true);
                 this.onChange(true, res.user.username);
@@ -17,10 +26,11 @@ module.exports = {
     },
 
     logout(cb) {
-        console.log('do login');
+        // Удаляем пользователя из сессии
         doLogout(() => {
-
-            localStorage.user = null;
+            // Сбрасываем флаг на клиенте
+            user.name = '';
+            user.authorized = false;
 
             if (cb) cb(false);
             this.onChange(false, null);
@@ -28,26 +38,22 @@ module.exports = {
     },
 
     loggedIn() {
-        return localStorage.user;
+        return user.authorized;
     },
 
     onChange() {
     }
-}
+};
 
 function doLogin(email, pass, cb) {
-
     socket.call('login', {
         email: email,
         pass: pass
     });
-
     socket.addHandler('authorize', cb);
 }
 
 function doLogout(cb) {
-
     socket.call('logout');
-
     socket.addHandler('unauthorize', cb);
 }

@@ -11,8 +11,7 @@ class Profile extends Component {
     }
     componentDidMount() {
         axios.get(`/services/profile`)
-            .then(res => {
-                console.log(res);
+            .then((res) => {
                 this.setState({profile : res.data.profile});
             });
     }
@@ -28,4 +27,4 @@ class Profile extends Component {
     }
 }
 
-module.exports = Profile
+module.exports = Profile;
