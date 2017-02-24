@@ -1,9 +1,5 @@
-process.env.NODE_ENV = 'development';
-
 var express = require('express');
 var passport = require('passport');
-
-var User = require('./app/models/user').User;
 
 var app = express();
 
@@ -24,9 +20,6 @@ app.use(sessionMiddleware);
 
 app.use(express.static('public/js/dist'));
 app.use(express.static('public/js/lib'));
-
-app.use('/node_modules', express.static(__dirname + '/node_modules'));
-
 
 // init middleware
 var bootstrap = require('./app/bootstrap');
@@ -62,22 +55,6 @@ app.use(function(req,res,next){
     next();
 });
 
-
-
-passport.serializeUser(function(user, done) {
-    console.log('ddddd');
-
-    done(null, user);
-});
-
-passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user){
-        err
-            ? done(err)
-            : done(null, user);
-    });
-});
-
 var mustBeAuthenticated = function (req, res, next) {
     req.isAuthenticated() ? next() : res.json({status: 'err', msg: 'authentication is required for requested action'});
 };
@@ -89,16 +66,6 @@ app.get('/', function (req, res) {
     res.render('home', {user: req.user});
 });
 
-var UsersController = require('./app/controllers/http/users');
-
-// authentication form page
-app.get('/user/login', UsersController.getHandler('login'));
-// process authentication form
-
-app.get('/user/logout', UsersController.getHandler('logout'));
-app.get('/user/reg', UsersController.getHandler('regForm'));
-app.post('/user/reg', UsersController.getHandler('regProcess'));
-
 var ServicesController = require('./app/controllers/http/services');
 
 app.get('/services', ServicesController.getHandler('home'));
@@ -107,7 +74,6 @@ app.get('/services/profile', ServicesController.getHandler('profile'));
 app.get('/services/dialogs', ServicesController.getHandler('dialogs'));
 app.get('/services/send', ServicesController.getHandler('send'));
 app.post('/services/setLike', ServicesController.getHandler('setLike'));
-
 app.get('/services/photos', ServicesController.getHandler('photos'));
 
 http.listen(3000, function () {

@@ -73,6 +73,7 @@ class GlobalNav extends Component {
                         ) : (
                             <div>
                                 <Link style={styles.link} to="/login">Sign in</Link>
+                                <Link style={styles.link} to="/reg">Sign up</Link>
                             </div>
                         )}
                 </div>

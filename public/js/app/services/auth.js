@@ -25,6 +25,22 @@ module.exports = {
         })
     },
 
+    reg(params, cb) {
+        doReg(params, (res) => {
+            if (res.status == 'error') {
+                switch (res.error.code) {
+                    case 11000:
+                        alert('Имя пользователя уже существует, пожалуйста, введите другое имя');
+                        break;
+                    case 0:
+                        alert('Ошибка при сохранении, проверьте данные');
+                        break;
+                }
+            }
+            cb(res.status == 'success');
+        })
+    },
+
     logout(cb) {
         // Удаляем пользователя из сессии
         doLogout(() => {
@@ -51,6 +67,11 @@ function doLogin(email, pass, cb) {
         pass: pass
     });
     socket.addHandler('authorize', cb);
+}
+
+function doReg(params, cb) {
+    socket.call('reg', params);
+    socket.addHandler('onRegResponse', cb);
 }
 
 function doLogout(cb) {

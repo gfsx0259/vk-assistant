@@ -6,7 +6,9 @@ var WebSocketStrategy = function (options, verify) {
 
     Strategy.call(this);
 
-    if (!verify) { throw new TypeError('LocalStrategy requires a verify callback'); }
+    if (!verify) {
+        throw new TypeError('LocalStrategy requires a verify callback');
+    }
 
     this._verify = verify;
 
@@ -19,16 +21,15 @@ var WebSocketStrategy = function (options, verify) {
 util.inherits(WebSocketStrategy, Strategy);
 
 
-WebSocketStrategy.prototype.authenticate = function(params) {
+WebSocketStrategy.prototype.authenticate = function (params) {
 
     var email = params.email;
     var password = params.pass;
 
-    this._verifiedCallback =  function (err, user, params, socket) {
+    this._verifiedCallback = function (err, user, params, socket) {
         if (!err && user) {
 
-            socket.request.session.passport = {user:user};
-
+            socket.request.session.passport = {user: user};
             socket.request.session.save();
 
             socket.emit('authorize', {

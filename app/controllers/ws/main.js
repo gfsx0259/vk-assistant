@@ -61,6 +61,17 @@ module.exports = {
           })
       });
 
+      socket.on('reg', (params) => {
+          let user = new User(params);
+          user.save((err) => {
+              if (err) {
+                  socket.emit('onRegResponse', {status: 'error', error: {code: err.code || 0}});
+              } else {
+                  socket.emit('onRegResponse', {status: 'success'});
+              }
+          });
+      });
+
 
       if (socket.request.session.passport && socket.request.session.passport.user) {
           var user = socket.request.session.passport.user;

@@ -30,6 +30,7 @@ const rootRoute = {
             require('./routes/Messages'),
             require('./routes/Profile'),
             require('./routes/Login'),
+            require('./routes/Registration'),
             require('./routes/Photos')
         ]
     }]
