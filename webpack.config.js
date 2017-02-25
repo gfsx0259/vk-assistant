@@ -1,29 +1,54 @@
 var webpack = require('webpack');
 var path = require('path');
 
-var BUILD_DIR = path.resolve(__dirname, 'public/js/dist');
-var APP_DIR = path.resolve(__dirname, 'public/js/app');
+var PUBLIC_DIR = 'public/js/';
+
+var BUILD_DIR = path.resolve(__dirname, PUBLIC_DIR + '/dist/');
+var APP_DIR = path.resolve(__dirname, PUBLIC_DIR + '/app/');
+
+var plugins = [];
+
+if (process.env.NODE_ENV !== 'production') {
+        plugins = [
+            new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+            }),
+            new webpack.optimize.OccurrenceOrderPlugin(),
+            new webpack.HotModuleReplacementPlugin(),
+            new webpack.NoEmitOnErrorsPlugin()
+    ];
+}
+
+var entry = [
+    APP_DIR + '/index'
+];
+
+if (process.env.NODE_ENV !== 'production') {
+    entry.push('webpack-hot-middleware/client');
+}
 
 var config = {
-    entry: APP_DIR + '/index.js',
+    entry: entry,
     output: {
         path: BUILD_DIR,
-        filename: 'index.js'
+        filename: 'bundle.js',
+        publicPath: '/dist/'
     },
-    module : {
-        loaders : [
+    module: {
+        loaders: [
             {
-                test : /\.jsx?/,
-                include : APP_DIR,
-                loader : 'babel-loader'
+                test: /\.jsx?/,
+                include: APP_DIR,
+                loader: 'babel-loader',
+                // plugins: ['transform-runtime'],
             }
         ]
     },
-    plugins: [
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-        })
-    ]
+    plugins: plugins
 };
+
+if (process.env.NODE_ENV !== 'production') {
+    config['devtool'] = 'cheap-module-eval-source-map';
+}
 
 module.exports = config;

@@ -1,7 +1,20 @@
 var express = require('express');
 var passport = require('passport');
+var webpack = require('webpack');
 
 var app = express();
+
+if (process.env.NODE_ENV !== 'production') {
+    // Для автоматического обновления модулей на клиенте 
+    var webpackDevMiddleware = require('webpack-dev-middleware');
+    var webpackHotMiddleware = require('webpack-hot-middleware');
+    var compiler = webpack(require('./webpack.config'));
+
+    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: '/dist/'}));
+    app.use(webpackHotMiddleware(compiler));
+}
+
+app.use(express.static('public/js'));
 
 app.set('json spaces', 40);
 
@@ -17,9 +30,6 @@ var sessionMiddleware = expressSession({
 });
 
 app.use(sessionMiddleware);
-
-app.use(express.static('public/js/dist'));
-app.use(express.static('public/js/lib'));
 
 // init middleware
 var bootstrap = require('./app/bootstrap');
@@ -44,7 +54,6 @@ app.use(passport.session());
 
 // pass user data to views
 app.use(function(req,res,next){
-
     var user = {
         name: req.user ? req.user.username : '',
         authorized: req.user ? true : false
