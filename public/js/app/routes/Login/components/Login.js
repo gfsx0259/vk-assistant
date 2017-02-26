@@ -13,6 +13,13 @@ class Login extends Component {
         };
     }
 
+    componentDidUpdate() {
+        if(this.props.user.redirect){
+            this.props.router.push(this.props.user.redirect);
+            this.props.user.redirect = null;
+        }
+    }
+
     handleSubmit(event) {
         event.preventDefault();
 

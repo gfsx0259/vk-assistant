@@ -8,38 +8,24 @@ import {
 
 import auth from '../services/auth'
 
-import { browserHistory } from 'react-router'
-
 export function login(username, password) {
 
     return (dispatch) => {
-        console.log('dis 1');
         dispatch({
             type: LOGIN_REQUEST,
-            payload: {
-                username: username,
-                password: password
-            }
+            payload: {}
         });
 
         auth.login(username, password, (loggedIn) => {
-
             if (loggedIn) {
                 dispatch({
                     type: LOGIN_SUCCESS,
-                    payload: {
-                        name: username,
-                        authorized: true
-                    }
+                    payload: username
                 });
-                browserHistory.push('/#/')
             } else {
                 dispatch({
                     type: LOGIN_ERROR,
-                    payload: {
-                        name: '',
-                        authorized: false
-                    }
+                    payload: ''
                 });
             }
         });
@@ -57,14 +43,8 @@ export function logout() {
             if (loggedOut) {
                 dispatch({
                     type: LOGOUT_SUCCESS,
-                    payload: {
-                        name: '',
-                        authorized: false
-                    }
+                    payload: ''
                 });
-                // TODO redirect to home page
-                //router.push('/');
-                //dispatch({type:'home', url:'/'});
             }
         });
     }

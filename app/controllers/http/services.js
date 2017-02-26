@@ -1,5 +1,7 @@
 var async = require('async');
 var Contact = require('./../../models/contact').Contact;
+var Dialog = require('./../../models/dialog');
+var _ = require('lodash');
 
 // Include services
 var vkAuthorizingServiceInstance = require('./../../services/vk/authorizing');
@@ -14,7 +16,7 @@ var servicesList = {
     },
     msg: function (req, res, token) {
         vkRequestBuilderServiceInstance.fetch('messages.get', token, {}, function (err, items) {
-            res.json({ items: items });
+            res.json({items: items});
         });
     },
     photos: function (req, res, token) {
@@ -22,11 +24,11 @@ var servicesList = {
         var params = {
             owner_id: req.query.owner_id,
             count: 200,
-            offset:0
+            offset: 0
         };
 
         vkRequestBuilderServiceInstance.fetch('photos.getAll', token, params, function (err, items) {
-            res.json({ items: items });
+            res.json({items: items});
         });
     },
     setLike: function (req, res, token) {
@@ -35,10 +37,14 @@ var servicesList = {
 
         let setLikeCalls = [];
 
-        req.body.pids.map(function(pid) {
-            setLikeCalls.push(function(callback) {
-                setTimeout(function(){
-                    vkRequestBuilderServiceInstance.fetch('likes.add', token, {owner_id: ownerId, item_id: pid, type: 'photo'}, function (err, result) {
+        req.body.pids.map(function (pid) {
+            setLikeCalls.push(function (callback) {
+                setTimeout(function () {
+                    vkRequestBuilderServiceInstance.fetch('likes.add', token, {
+                        owner_id: ownerId,
+                        item_id: pid,
+                        type: 'photo'
+                    }, function (err, result) {
                         callback(null);
                     });
                 }, 2000);
@@ -47,7 +53,7 @@ var servicesList = {
 
         async.waterfall(setLikeCalls, function (err, result) {
             if (err) throw 'An error occurs while set likes processing';
-            res.json({ status: 'success' });
+            res.json({status: 'success'});
         });
     },
     profile: function (req, res, token) {
@@ -61,77 +67,66 @@ var servicesList = {
     },
     dialogs: function (req, res, token) {
 
-        var usersInfo = {};
+        // Чтение данных из базы
+        // TODO Подумать как получить контакты из связанной таблицы pollute?
+        //
+        // Dialog.find({ from_uid : token.user_id}, (err, items) => {
+        //     console.log(items);
+        //     res.json({items: items});
+        // });
+        // return false;
 
-        var mapUserInfoToDialog = function (value) {
-            value['info'] = usersInfo[value.uid];
-            return value;
-        };
-
+        // Первоначальное получение диалогов и контактов из базы
+        // TODO реализовать получение новых на лету, хранить отметку времени "ts":1860038642
         vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 0}, function (err, items) {
 
-            var needFetchedUserIds = [];
-            var fetchUsersInfoCalls = [];
-
-            items.forEach(function (dialogItem) {
-                fetchUsersInfoCalls.push(function (callback) {
-                        Contact.findOne({user_id: dialogItem.uid}, function (err, contact) {
-                            if (err) throw 'An error occurs while reading contacts from DB';
-
-                            // Если данные удалось получить из БД
-                            if (contact) {
-                                usersInfo[dialogItem.uid] = contact;
-                            } else {
-                                // Если не удалось получить данные по контакту из базы
-                                needFetchedUserIds.push(dialogItem.uid);
-                            }
-
-                            callback(null, dialogItem.uid);
-                        });
+            // После получения всех диалогов, получим все данные контактов
+            let fetchPromise = new Promise((resolve, reject) => {
+                vkRequestBuilderServiceInstance.fetch(
+                    'users.get', token, {
+                        user_ids: items.map(item => {
+                            return item.uid
+                        }).join(','),
+                        fields: ['photo_200', 'city', 'verified'].join(',')
+                    }, (err, data) => {
+                        !err ? resolve(data) : reject(err);
                     }
-                )
+                );
             });
 
-            async.parallel(fetchUsersInfoCalls, function (err, result) {
-                // Если необходим запрос для получения данных пользователей
+            // Когда данные контактов будут получены, сохраним в базу контакты и диалоги
+            fetchPromise.then((data) => {
+                if (data.length) {
+                    var BulkContact = Contact.collection.initializeUnorderedBulkOp();
+                    data.forEach(function (value) {
+                        BulkContact.find({uid: value.uid}).upsert().update({'$set': value});
+                    });
+                    BulkContact.execute();
+                }
 
-                var ContactsHasAdditionalData = new Promise(function (resolve, reject) {
+                // Сохраним диалоги в базу
+                // Подумать, как связать диалоги с контактами, метод pollute
+                var Bulk = Dialog.collection.initializeUnorderedBulkOp();
+                items.forEach(function (value) {
+                    // Id текущего пользователя добавляем к документу, чтобы знать к кому относятся диалоги
+                    value.from_uid = token.user_id;
+                    // Вставляем/обновляем записи
+                    Bulk.find({mid: value.mid}).upsert().update({'$set': value});
+                });
+                Bulk.execute();
 
-                    if (!needFetchedUserIds.length) {
-                        resolve(items);
-                    }
-
-                    vkRequestBuilderServiceInstance.fetch(
-                        'users.get', token, {
-                            user_ids: needFetchedUserIds.join(','),
-                            fields: ['photo_200', 'city', 'verified'].join(',')
-                        },
-                        function (err, data) {
-                            var updateContactsCall = [];
-
-                            data.forEach(function (userData) {
-                                updateContactsCall.push(function (callback) {
-                                    usersInfo[userData.uid] = userData;
-                                    Contact.findOneAndUpdate(
-                                        {user_id: userData.uid}, userData, {upsert: true}, function (err, doc) {
-                                            if (!err) {
-                                                callback(null, userData);
-                                            }
-                                        });
-                                });
-                            });
-
-                            async.parallel(updateContactsCall, function (err, result) {
-                                if (err) throw 'An error occurs while updating contact in DB';
-                                resolve(items);
-                            });
-                        });
-
+                // Возврат результата клиенту, в будущем не должно так работать, данные должны читаться из базы
+                items = items.map(function (value) {
+                    value['info'] = data.filter(function (c) {
+                        return c.uid = value.uid;
+                    });
+                    return value;
                 });
 
-                ContactsHasAdditionalData.then(function (items) {
-                    res.json({items: items.map(mapUserInfoToDialog)});
-                })
+                res.json({items: items});
+
+            }).catch(function (err) {
+                console.log("Promise Rejected", err);
             });
         });
     },
@@ -150,7 +145,8 @@ var servicesList = {
 /**
  * Constructor
  */
-var services = function () {};
+var services = function () {
+};
 
 services.prototype = {
     getHandler: function (name) {

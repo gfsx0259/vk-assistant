@@ -9,7 +9,8 @@ import {
 const initialState = {
     name: '',
     authorized: false,
-    processing: false
+    processing: false,
+    redirect: null
 };
 
 export default (state = initialState, action) => {
@@ -26,16 +27,16 @@ export default (state = initialState, action) => {
             return Object.assign({}, state, {processing: true});
         case LOGIN_SUCCESS:
             console.log('LOGIN_SUCCESS reducer');
-            return Object.assign({}, state, {user: action.payload, processing: false});
+            return Object.assign({}, state, {name: action.payload, authorized: true, processing: false, redirect: '/'});
         case LOGIN_ERROR:
             console.log('LOGIN_ERROR reducer');
-            return Object.assign({}, state, {user: action.payload, processing: false});
+            return Object.assign({}, state, {name: action.payload, authorized: false, processing: false});
         case LOGOUT_REQUEST:
             console.log('LOGOUT_REQUEST reducer');
             return Object.assign({}, state, {processing: true});
         case LOGOUT_SUCCESS:
             console.log('LOGOUT_SUCCESS reducer');
-            return Object.assign({}, state,  {user: action.payload, processing: false});
+            return Object.assign({}, state,  {user: action.payload, authorized: false, processing: false});
         default:
             return state;
     }
