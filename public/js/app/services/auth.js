@@ -2,12 +2,6 @@ var socket = require('./socket');
 
 module.exports = {
     login(email, pass, cb) {
-
-        if (user.authorized) {
-            this.onChange(true, user.name);
-            return
-        }
-
         doLogin(email, pass, (res) => {
             if (res.result) {
 
@@ -48,7 +42,7 @@ module.exports = {
             user.name = '';
             user.authorized = false;
 
-            if (cb) cb(false);
+            if (cb) cb(true);
             this.onChange(false, null);
         })
     },

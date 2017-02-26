@@ -1,7 +1,9 @@
 import React from 'react'
 import {render} from 'react-dom'
 import {Router, hashHistory} from 'react-router'
+import { Provider } from 'react-redux'
 import auth from './services/auth'
+import configureStore from './store/configureStore'
 
 const rootRoute = {
     childRoutes: [{
@@ -36,11 +38,15 @@ const rootRoute = {
     }]
 };
 
+const store = configureStore();
+
 render((
-    <Router
-        history={hashHistory}
-        routes={rootRoute}
-    />
+    <Provider store={store}>
+        <Router
+            history={hashHistory}
+            routes={rootRoute}
+        />
+    </Provider>
 ), document.getElementById('app'));
 
 module.hot.accept();

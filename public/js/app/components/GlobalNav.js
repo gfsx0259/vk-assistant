@@ -1,8 +1,6 @@
 import React, {Component} from 'react'
 import {Link} from 'react-router'
 
-import auth from '../services/auth'
-
 const dark = 'hsl(200, 20%, 20%)';
 const light = '#fff';
 const styles = {};
@@ -29,26 +27,11 @@ styles.activeLink = {
 class GlobalNav extends Component {
 
     constructor(props, context) {
-        super(props, context)
-        this.state = {
-            loggedIn: false
-        };
-    }
-
-    updateAuth(loggedIn, user) {
-        this.setState({
-            loggedIn: loggedIn,
-            user: user
-        })
-    }
-
-    componentWillMount() {
-        auth.onChange = this.updateAuth.bind(this);
-        auth.login();
+        super(props, context);
     }
 
     logOut() {
-        auth.logout()
+        this.props.logout();
     }
 
     render() {
@@ -56,7 +39,7 @@ class GlobalNav extends Component {
             <div style={styles.wrapper}>
                 <div style={{float: 'left'}}>
                     <Link to="/" style={styles.link}>Home</Link>
-                    {this.state.loggedIn &&
+                    {this.props.user.authorized &&
                     <div style={{float: 'right'}}>
                         <Link to="/dialogs" style={styles.link} activeStyle={styles.activeLink}>Dialogs</Link>
                         <Link to="/messages" style={styles.link} activeStyle={styles.activeLink}>Messages</Link>
@@ -65,9 +48,9 @@ class GlobalNav extends Component {
                     }
                 </div>
                 <div style={{float: 'right'}}>
-                    {this.state.loggedIn ? (
+                    {this.props.user.authorized ? (
                             <div>
-                                <Link style={styles.link} to="/profile">{this.state.user}</Link>
+                                <Link style={styles.link} to="/profile">{this.props.user.name}</Link>
                                 <button onClick={() => this.logOut()}>log out</button>
                             </div>
                         ) : (

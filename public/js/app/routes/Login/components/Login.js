@@ -1,6 +1,8 @@
 import React, {Component} from 'react'
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
-import auth from '../../../services/auth'
+import * as userActions from '../../../actions/user'
 
 class Login extends Component {
     constructor(props) {
@@ -17,25 +19,13 @@ class Login extends Component {
         const email = this.refs.email.value;
         const pass = this.refs.pass.value;
 
-        auth.login(email, pass, (loggedIn) => {
-
-            if (!loggedIn) {
-                return this.setState({error: true});
-            }
-
-            const {location} = this.props;
-
-            if (location.state && location.state.nextPathname) {
-                this.props.router.replace(location.state.nextPathname)
-            } else {
-                this.props.router.replace('/')
-            }
-        })
+        this.props.login(email, pass);
     }
 
     render() {
         return (
             <form onSubmit={this.handleSubmit.bind(this)}>
+                <div>{this.props.user.processing.toString()}</div>
                 <label><input ref="email" placeholder="email" defaultValue="joe@example.com"/></label>
                 <label><input ref="pass" placeholder="password"/></label> (hint: password1)<br />
                 <button type="submit">login</button>
@@ -47,4 +37,10 @@ class Login extends Component {
     }
 }
 
-module.exports = Login;
+module.exports = connect(
+    (state) => ({
+        user: state.user
+    }),
+    (dispatch) => (bindActionCreators(userActions, dispatch))
+
+)(Login);
