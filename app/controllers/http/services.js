@@ -126,7 +126,7 @@ var servicesList = {
                 res.json({items: items});
 
             }).catch(function (err) {
-                console.log("Promise Rejected", err);
+                console.log(err);
             });
         });
     },
