@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 
 var ContactSchema = new mongoose.Schema({
+    _id: {type: Number},
     user_id: {type: Number},
     first_name: {type: String},
     last_name: {type: String},

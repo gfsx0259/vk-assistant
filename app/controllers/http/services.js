@@ -65,28 +65,28 @@ var servicesList = {
                 });
             });
     },
-    dialogs: function (req, res, token) {
-
-        // Чтение данных из базы
-        // TODO Подумать как получить контакты из связанной таблицы pollute?
-        //
-        // Dialog.find({ from_uid : token.user_id}, (err, items) => {
-        //     console.log(items);
-        //     res.json({items: items});
-        // });
-        // return false;
-
+    // Чтение данных из базы при первом запросе от клиента
+    dialogs: (req, res, token) => {
+        Dialog.find({from_uid: token.user_id}).populate('contact').then((dialogs) => {
+            // Если в базе уже есть диалоги, сразу отдаём их, обновления получим потом
+            if (dialogs.length > 0) {
+                res.json({items: dialogs});
+            }
+        }).catch(err => {
+            console.warn(err);
+        });
+    },
+    // TODO определить когда обращаться к API и как обновлять данные
+    _dialogsUpdate: () => {
         // Первоначальное получение диалогов и контактов из базы
         // TODO реализовать получение новых на лету, хранить отметку времени "ts":1860038642
         vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 0}, function (err, items) {
 
             // После получения всех диалогов, получим все данные контактов
-            let fetchPromise = new Promise((resolve, reject) => {
+            let getContactsDataPromise = new Promise((resolve, reject) => {
                 vkRequestBuilderServiceInstance.fetch(
                     'users.get', token, {
-                        user_ids: items.map(item => {
-                            return item.uid
-                        }).join(','),
+                        user_ids: items.map(item => { return item.uid }).join(','),
                         fields: ['photo_200', 'city', 'verified'].join(',')
                     }, (err, data) => {
                         !err ? resolve(data) : reject(err);
@@ -95,36 +95,27 @@ var servicesList = {
             });
 
             // Когда данные контактов будут получены, сохраним в базу контакты и диалоги
-            fetchPromise.then((data) => {
+            getContactsDataPromise.then((data) => {
                 if (data.length) {
-                    var BulkContact = Contact.collection.initializeUnorderedBulkOp();
+                    let BulkContacts = Contact.collection.initializeUnorderedBulkOp();
                     data.forEach(function (value) {
-                        BulkContact.find({uid: value.uid}).upsert().update({'$set': value});
+                        value._id = value.uid;
+                        BulkContacts.find({_id: value.uid}).upsert().update({'$set': value});
                     });
-                    BulkContact.execute();
+                    BulkContacts.execute();
                 }
 
                 // Сохраним диалоги в базу
-                // Подумать, как связать диалоги с контактами, метод pollute
-                var Bulk = Dialog.collection.initializeUnorderedBulkOp();
-                items.forEach(function (value) {
+                let BulkDialogs = Dialog.collection.initializeUnorderedBulkOp();
+                items.forEach((value) => {
                     // Id текущего пользователя добавляем к документу, чтобы знать к кому относятся диалоги
+                    value._id = value.mid;
                     value.from_uid = token.user_id;
-                    // Вставляем/обновляем записи
-                    Bulk.find({mid: value.mid}).upsert().update({'$set': value});
+                    value.contact = value.uid;
+                    // Вставляем/обновляем записи по пользователю с которым ведётся диалог
+                    BulkDialogs.find({uid: value.uid}).upsert().update({'$set': value});
                 });
-                Bulk.execute();
-
-                // Возврат результата клиенту, в будущем не должно так работать, данные должны читаться из базы
-                items = items.map(function (value) {
-                    value['info'] = data.filter(function (c) {
-                        return c.uid = value.uid;
-                    });
-                    return value;
-                });
-
-                res.json({items: items});
-
+                BulkDialogs.execute();
             }).catch(function (err) {
                 console.log(err);
             });

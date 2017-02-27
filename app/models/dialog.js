@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 
 var DialogSchema = new mongoose.Schema({
+    _id: {type: Number},
     mid: {type: Number, unique: true, required: true},
     date: {type: Number},
     out: {type: Number},
@@ -8,7 +9,8 @@ var DialogSchema = new mongoose.Schema({
     to_uid: {type: Number},    //User friends ids
     read_state: {type: Number},
     title: {type: String},
-    body: {type: String}
+    body: {type: String},
+    contact:  {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'}
 }, {collection: 'dialogs'});
 
 module.exports = mongoose.model('Dialog', DialogSchema);

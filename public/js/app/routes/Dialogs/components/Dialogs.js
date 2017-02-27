@@ -21,9 +21,9 @@ class Dialogs extends Component {
         var dialogs = this.state.dialogs.map(function (dialog) {
             return (
                 <li key={dialog.uid}>
-                    <img src={dialog.info && dialog.info.photo_200}/>
+                    <img src={dialog.contact.photo_200}/>
                     <p>{dialog.body}</p>
-                    <p>{dialog.info && dialog.info.first_name} {dialog.info && dialog.info.last_name}</p>
+                    <p>{dialog.contact.first_name} {dialog.contact.last_name}</p>
                     <Link to={`photos/${dialog.uid}`}>Photos</Link>{' '}
                     <form action="/services/send" method="get">
                         <input name="msg"/>
