@@ -28,8 +28,7 @@ class App extends Component {
 
 function mapStateToProps(state) {
     return {
-        user: state.user,
-        dialogs: state.dialogs
+        user: state.user
     }
 }
 

@@ -113,7 +113,7 @@ var servicesList = {
                     value.from_uid = token.user_id;
                     value.contact = value.uid;
                     // Вставляем/обновляем записи по пользователю с которым ведётся диалог
-                    BulkDialogs.find({uid: value.uid}).upsert().update({'$set': value});
+                    BulkDialogs.find({uid: value.uid, from_uid: value.from_id}).upsert().update({'$set': value});
                 });
                 BulkDialogs.execute();
             }).catch(function (err) {

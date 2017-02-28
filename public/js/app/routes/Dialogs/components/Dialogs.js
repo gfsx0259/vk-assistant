@@ -2,6 +2,11 @@ import React, {Component} from 'react'
 import axios from 'axios';
 import {Link} from 'react-router'
 
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
+
+import * as dialogsActions from '../../../actions/dialogs'
+
 class Dialogs extends Component {
     constructor(props) {
         super(props);
@@ -11,14 +16,17 @@ class Dialogs extends Component {
     }
 
     componentDidMount() {
-        axios.get(`/services/dialogs`)
-            .then((res) => {
-                this.setState({dialogs: res.data.items});
-            });
+        this.props.fetch();
+        // axios.get(`/services/dialogs`)
+        //     .then((res) => {
+        //         this.setState({dialogs: res.data.items});
+        //     });
     }
 
     render() {
-        var dialogs = this.state.dialogs.map(function (dialog) {
+
+        <div>{this.props.dialogs.processing ? 'Загрузка' : '+++'}</div>
+        var dialogs = this.props.dialogs.list.map(function (dialog) {
             return (
                 <li key={dialog.uid}>
                     <img src={dialog.contact.photo_200}/>
@@ -43,4 +51,11 @@ class Dialogs extends Component {
     }
 }
 
-module.exports = Dialogs;
+
+module.exports = connect(
+    (state) => ({
+        dialogs: state.dialogs
+    }),
+    (dispatch) => (bindActionCreators(dialogsActions, dispatch))
+
+)(Dialogs);
