@@ -9,6 +9,7 @@ var schema = require('./schema');
 var vkRequestBuilderService = function () {};
 
 vkRequestBuilderService.prototype = {
+    // TODO deprecated
     fetch: function (method, token, params, callback) {
 
         var requestParams = {};
@@ -49,6 +50,15 @@ vkRequestBuilderService.prototype = {
             }
         );
     },
+
+
+    /**
+     * Метод для осуществления запроса к VK API
+     * @param method
+     * @param token
+     * @param params
+     * @returns {Promise}
+     */
     fetchPromise: function (method, token, params) {
         return new Promise((resolve, reject) => {
             var requestParams = {};
@@ -57,44 +67,32 @@ vkRequestBuilderService.prototype = {
                     requestParams[value] = params[value];
                 }
             });
-            requestParams = _.merge(requestParams, {access_token: token.access_token});
             request.post(
                 'https://api.vk.com/method/' + method, {
-                    form: requestParams
+                    form: _.merge(requestParams, {access_token: token.access_token})
                 },
-                function (error, response, body) {
-                    body = JSON.parse(body);
-                    resolve(body.response);
+                function (err, response, body) {
+                    !err ? resolve(JSON.parse(body).response) : reject(err);
                 }
             );
         });
-
-
     },
 
-    fetchLongPull: function (params, callback) {
-        console.log(params);
-        request.post(
-            'https://' + params['server'],
-            {
-                form: params
-            },
-            function (error, response, body) {
-                console.log(error);
-                // If response is correct
-                if (!error) {
-                    body = JSON.parse(body);
-                    // Check auth error
-                    if (!body.error) {
-                        callback(false, body);
-                    } else {
-                        callback(true);
-                    }
-                } else {
-                    throw 'An error occurred during the execution of the API request'
+    /**
+     * Метод для осуществления запроса к VK API LongPull Server
+     * @param params
+     * @returns {Promise}
+     */
+    fetchLongPull: function (params) {
+        console.log('invoke pull');
+        return new Promise((resolve, reject) => {
+            request.post(
+                'https://' + params['server'], {form: params},
+                (err, response, body) => {
+                    !err ? resolve(JSON.parse(body)) : reject(err);
                 }
-            }
-        );
+            );
+        });
     }
 };
 

@@ -1,12 +1,11 @@
 var mongoose = require('mongoose');
 
 var DialogSchema = new mongoose.Schema({
-    _id: {type: Number},
-    mid: {type: Number, unique: true, required: true},
+    mid: {type: Number, required: true},
     date: {type: Number},
     out: {type: Number},
     from_uid: {type: Number},  //Current user vk id
-    to_uid: {type: Number},    //User friends ids
+    uid: {type: Number},    //User friends ids
     read_state: {type: Number},
     title: {type: String},
     body: {type: String},

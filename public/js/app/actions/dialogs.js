@@ -14,10 +14,12 @@ export function fetch() {
         });
 
         dialogsService.fetch((result) => {
+            // Вызываем обновление данных reducer
             dispatch({
                 type: FETCH_DIALOGS_RESPONSE,
                 payload: result.items
             });
+            // Просим сервер ждать обновлений
              dialogsService.fetchLongPull(result => {
                  console.log(result);
              });
