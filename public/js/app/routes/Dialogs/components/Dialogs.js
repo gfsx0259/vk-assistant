@@ -1,11 +1,36 @@
 import React, {Component} from 'react'
-import axios from 'axios';
 import {Link} from 'react-router'
 
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
 import * as dialogsActions from '../../../actions/dialogs'
+
+const styles = {};
+
+styles.dialogRowLeft = {
+    display: 'inline-block',
+};
+
+styles.dialogRowAvatar = {
+    width:'50px',
+    borderRadius: '50px',
+    marginRight: '15px'
+};
+
+styles.userName = {
+    fontSize: '14px'
+};
+
+styles.dialogRowRight = {
+    fontFamily: 'Arial',
+    display: 'inline-block',
+    verticalAlign: 'top'
+};
+
+styles.list = {
+    listStyleType: 'none'
+};
 
 class Dialogs extends Component {
     constructor(props) {
@@ -17,35 +42,32 @@ class Dialogs extends Component {
 
     componentDidMount() {
         this.props.fetch();
-        // axios.get(`/services/dialogs`)
-        //     .then((res) => {
-        //         this.setState({dialogs: res.data.items});
-        //     });
     }
 
     render() {
-
         <div>{this.props.dialogs.processing ? 'Загрузка' : '+++'}</div>
         var dialogs = this.props.dialogs.list.map(function (dialog) {
             return (
                 <li key={dialog.uid}>
-                    <img src={dialog.contact.photo_200}/>
-                    <p>{dialog.body}</p>
-                    <p>{dialog.contact.first_name} {dialog.contact.last_name}</p>
-                    <Link to={`photos/${dialog.uid}`}>Photos</Link>{' '}
-                    <form action="/services/send" method="get">
-                        <input name="msg"/>
-                        <input name="user_id" type="hidden" value={dialog.uid}/>
-                        <input type="submit"/>
-                    </form>
+                    <div style={styles.dialogRowLeft}>
+                        <img src={dialog.contact.photo_200} style={styles.dialogRowAvatar}/>
+                    </div>
+                    <div style={styles.dialogRowRight}>
+                        <b style={styles.userName}>{dialog.contact.first_name} {dialog.contact.last_name} </b>
+                        <Link to={`photos/${dialog.uid}`}>[Фотографии]</Link>
+                        <p>{dialog.body}</p>
+                    </div>
+                    {/*<form action="/services/send" method="get">*/}
+                        {/*<input name="msg"/>*/}
+                        {/*<input name="user_id" type="hidden" value={dialog.uid}/>*/}
+                        {/*<input type="submit"/>*/}
+                    {/*</form>*/}
                 </li>
             );
         });
-
         return (
             <div>
-                <h2>Dialogs</h2>
-                <ul>{dialogs}</ul>
+                <ul style={styles.list}>{dialogs}</ul>
             </div>
         )
     }

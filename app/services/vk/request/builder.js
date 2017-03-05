@@ -84,7 +84,7 @@ vkRequestBuilderService.prototype = {
      * @returns {Promise}
      */
     fetchLongPull: function (params) {
-        console.log('invoke pull');
+        console.log('invoke pull', params);
         return new Promise((resolve, reject) => {
             request.post(
                 'https://' + params['server'], {form: params},

@@ -63,7 +63,7 @@ module.exports = {
             });
         });
 
-        var dialogsFetchInit = function update() {
+        var dialogsFetchInit = function update(cb) {
             // Первоначальное получение диалогов и контактов из базы
             let actualizeTokenPromise = new Promise((resolve, reject) => {
                 vkAuthorizingServiceInstance.actualizeToken((err, token) => {
@@ -111,7 +111,7 @@ module.exports = {
                                     from_uid: value.from_uid
                                 }).upsert().update({'$set': value});
                             });
-                            BulkDialogs.execute();
+                            BulkDialogs.execute(cb);
                         }).catch(function (err) {
                             console.log(err);
                         });
@@ -134,7 +134,9 @@ module.exports = {
                             items: dialogs
                         });
                     } else {
-                        dialogsFetchInit();
+                        dialogsFetchInit(() => {
+                            dialogsFetch();
+                        });
                     }
                 }).catch(err => {
                     console.warn(err);
@@ -176,6 +178,7 @@ module.exports = {
                 })).then(updateData => {
                     console.log(updateData);
                     socket.request.session['longPullServerData']['ts'] = updateData['ts'];
+                    socket.request.session['longPullServerData']['time'] = Date.now();
                     socket.request.session.save();
 
                     let newMessages = [];
@@ -192,10 +195,14 @@ module.exports = {
                         updateDialogs(newMessages);
                     }
 
-console.log(newMessages);
                     dialogsFetchLongPull();
                 }).catch({});
             } else {
+                console.log('long pull else');
+                dialogsFetchInit(() => {
+                    dialogsFetch();
+                });
+
                 // Если нету, то получаем их и вызываем метод ещё раз
                 new Promise((resolve, reject) => {
                     vkAuthorizingServiceInstance.actualizeToken((err, token) => {
@@ -205,10 +212,14 @@ console.log(newMessages);
                     return vkRequestBuilderServiceInstance.fetchPromise(
                         'messages.getLongPollServer', token, {});
                 }).then((data) => {
-                        socket.request.session['longPullServerData'] = _.merge(data, {time: Date.now()});
+                    if (!data.failed) {
+                        socket.request.session['longPullServerData'] = _.merge(data, {
+                            time: Date.now()
+                        });
                         socket.request.session.save(() => {
                             dialogsFetchLongPull();
                         });
+                    }
                 });
             }
         }
