@@ -42,6 +42,8 @@ module.exports = {
             user.name = '';
             user.authorized = false;
 
+            location.href = '/';
+
             if (cb) cb(true);
             this.onChange(false, null);
         })

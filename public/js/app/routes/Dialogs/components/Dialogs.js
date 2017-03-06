@@ -57,11 +57,11 @@ class Dialogs extends Component {
                         <Link to={`photos/${dialog.uid}`}>[Фотографии]</Link>
                         <p>{dialog.body}</p>
                     </div>
-                    {/*<form action="/services/send" method="get">*/}
-                        {/*<input name="msg"/>*/}
-                        {/*<input name="user_id" type="hidden" value={dialog.uid}/>*/}
-                        {/*<input type="submit"/>*/}
-                    {/*</form>*/}
+                    <form action="/services/send" method="get">
+                        <input name="msg"/>
+                        <input name="user_id" type="hidden" value={dialog.uid}/>
+                        <input type="submit"/>
+                    </form>
                 </li>
             );
         });

@@ -45,8 +45,10 @@ io.use(function(socket, next){
 });
 
 // processing ws connections
-var socketController = require('./app/controllers/ws/main');
-io.on('connection', socketController.connection);
+io.on('connection', (socket) => {
+    require('./app/controllers/ws/users').respond(socket);
+    require('./app/controllers/ws/dialogs').respond(socket);
+});
 
 // authentication middleware
 app.use(passport.initialize());

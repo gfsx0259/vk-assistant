@@ -89,6 +89,8 @@ vkRequestBuilderService.prototype = {
             request.post(
                 'https://' + params['server'], {form: params},
                 (err, response, body) => {
+                    console.warn('fetch long pull resp');
+                    console.warn(err, body);
                     !err ? resolve(JSON.parse(body)) : reject(err);
                 }
             );

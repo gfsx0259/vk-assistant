@@ -9,6 +9,7 @@ var bootstrap = function (app) {
 bootstrap.prototype = {
     db: function () {
         // initialize database connection
+        mongoose.Promise = global.Promise;
         mongoose.connect('mongodb://localhost/vk-assistant');
     },
     middleware: function (app) {
