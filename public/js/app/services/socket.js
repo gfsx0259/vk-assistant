@@ -1,12 +1,11 @@
-var socket = function () {
-    this.io = io();
-};
-
-socket.prototype = {
-    call: function (method, params) {
-        this.io.emit(method, params);
-    },
-    addHandler: function (method, cb) {
+class socket {
+    constructor() {
+        this.io = io();
+    }
+    call(method, params, cb) {
+        this.io.emit(method, params, cb);
+    }
+    addHandler(method, cb) {
         this.io.on(method, cb);
     }
 }

@@ -25,8 +25,8 @@ module.exports.respond = (socket) => {
 
 
     // Получение списка диалогов из БД
-    socket.on('dialogsFetch', () => {
-        dialogServiceInstance.dialogsFetch();
+    socket.on('dialogsFetch', (data, cb) => {
+        dialogServiceInstance.dialogsFetch(cb);
         console.log('run loop firstly');
         // Если пользователь переходил на другую вкладку, но не закрывал соединение,
         // => не создавать новый цикл, если уже существует
@@ -34,11 +34,5 @@ module.exports.respond = (socket) => {
             console.log('new!!');
             loop();
         }
-
-    });
-
-    // Запрос на получение обновлений
-    socket.on('dialogsFetchLongPull', () => {
-        dialogServiceInstance.dialogsFetchLongPull();
     });
 };

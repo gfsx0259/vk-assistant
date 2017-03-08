@@ -7,7 +7,7 @@ let Contact = require('./../../../models/contact').Contact;
 
 let _ = require('lodash');
 
-module.exports = class dialogService {
+class dialogService {
     /**
      * @param socket
      */
@@ -18,7 +18,7 @@ module.exports = class dialogService {
     /**
      * Получение диалогов из БД, либо запрос в АПИ при их отсутствии (первоначальный запрос)
      */
-    dialogsFetch() {
+    dialogsFetch(cb) {
         let actualizeTokenPromise = new Promise((resolve, reject) => {
             vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
                 !err ? resolve(token) : reject(err);
@@ -29,9 +29,13 @@ module.exports = class dialogService {
             Dialog.find({from_uid: token.user_id}, null, {sort: {date: -1}}).populate('contact').then((dialogs) => {
                 // Если в базе уже есть диалоги, сразу отдаём их, обновления получим потом
                 if (dialogs.length > 0) {
-                    this.socket.emit('onDialogsFetchResponse', {
-                        items: dialogs
-                    });
+                    // Возвращаем данные через callback socket.io
+                    if (cb) {
+                        cb({items: dialogs});
+                    } else {
+                        // После Long Pull вызываем событие
+                        this.socket.emit('onDialogsFetchResponse', {items: dialogs});
+                    }
                 } else {
                     this._dialogsFetchInit(() => {
                         this.dialogsFetch();
@@ -48,10 +52,10 @@ module.exports = class dialogService {
      * в случае истечения срока данных Long Pull сервера - их получение и запуск цикла
      * @returns {Promise<R>|Promise.<T>|Promise}
      */
-    dialogsFetchLongPull(cb) {
+    dialogsFetchLongPull(loopCallback) {
         console.log('fetch pull working');
         // Если в этой сессии уже есть данные для LongPull сервера
-        if (this.socket.request.session['longPullServerData'] && Date.now() <= this.socket.request.session['longPullServerData'].time + 86400*1000) {
+        if (this.socket.request.session['longPullServerData'] && Date.now() <= this.socket.request.session['longPullServerData'].time + 86400 * 1000) {
             return vkRequestBuilderServiceInstance.fetchLongPull(_.merge(this.socket.request.session['longPullServerData'], {
                 act: 'a_check',
                 wait: 25,
@@ -67,24 +71,21 @@ module.exports = class dialogService {
 
                     console.log(updateData);
 
-                        updateData.updates.forEach((updateItem) => {
+                    updateData.updates.forEach((updateItem) => {
 
-                            if (updateItem[0] == 4) {
-                                console.warn('Новое сообщение!');
-                                newMessages.push(updateItem);
-                            }
-                        });
-
-                        if (newMessages.length) {
-                            this._updateDialogs(newMessages);
+                        if (updateItem[0] == 4) {
+                            console.warn('Новое сообщение!');
+                            newMessages.push(updateItem);
                         }
+                    });
 
-                        // Не делаем бесконечный цикл на сервере, а отправляем клиенту сообщение, что запрос выполнен
-                        this.socket.emit('onDialogsFetchLongPullResponse');
-
+                    if (newMessages.length) {
+                        this._updateDialogs(newMessages);
+                    }
                 }
-                cb();
-            }).catch({});
+            }).catch((err) => {
+                console.warn(err);
+            });
         } else {
             console.log('long pull else');
             this._dialogsFetchInit(() => {
@@ -100,12 +101,13 @@ module.exports = class dialogService {
                 return vkRequestBuilderServiceInstance.fetchPromise(
                     'messages.getLongPollServer', token, {});
             }).then((data) => {
-               // if (typeof data.failed == 'undefined') {
-                    this._updateConnectionData(_.merge(data, {time: Date.now()}), cb);
-               //  }
+                this._updateConnectionData(_.merge(data, {time: Date.now()}), cb);
             }).catch(() => {
             });
         }
+
+        // Продолжаем цикл
+        loopCallback();
     }
 
     /**
@@ -195,6 +197,7 @@ module.exports = class dialogService {
                 });
         });
     }
+
     /**
      * Обновление данных соединения с Long Pull сервером
      * @param params
@@ -207,4 +210,6 @@ module.exports = class dialogService {
         );
         this.socket.request.session.save(cb);
     }
-};
+}
+
+module.exports = dialogService;
