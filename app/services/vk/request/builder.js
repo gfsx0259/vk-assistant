@@ -26,8 +26,6 @@ vkRequestBuilderService.prototype = {
         });
 
         requestParams = _.merge(requestParams, {access_token: token.access_token});
-
-        console.log(method);
         request.post(
             'https://api.vk.com/method/' + method,
             {
@@ -35,12 +33,11 @@ vkRequestBuilderService.prototype = {
             },
             function (error, response, body) {
                 // If response is correct
-                console.log(body);
                 if (!error && response.statusCode == 200) {
                     body = JSON.parse(body);
                     // Check auth error
                     if (!body.error) {
-                        callback(false, Array.isArray(body.response) ? body.response.filter(function (value) { return typeof value == 'object' }) : body.response);
+                        callback(false, Array.isArray(body.response) ? body.response.filter((value) => { return typeof value == 'object' }) : body.response);
                     } else {
                         callback(true);
                     }
@@ -61,7 +58,7 @@ vkRequestBuilderService.prototype = {
      */
     fetchPromise: function (method, token, params) {
         return new Promise((resolve, reject) => {
-            var requestParams = {};
+            let requestParams = {};
             schema[method].forEach(function (value) {
                 if (params[value]) {
                     requestParams[value] = params[value];
@@ -84,13 +81,10 @@ vkRequestBuilderService.prototype = {
      * @returns {Promise}
      */
     fetchLongPull: function (params) {
-        console.log('invoke pull', params);
         return new Promise((resolve, reject) => {
             request.post(
                 'https://' + params['server'], {form: params},
                 (err, response, body) => {
-                    console.warn('fetch long pull resp');
-                    console.warn(err, body);
                     !err ? resolve(JSON.parse(body)) : reject(err);
                 }
             );

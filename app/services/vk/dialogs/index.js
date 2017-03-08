@@ -48,35 +48,42 @@ module.exports = class dialogService {
      * в случае истечения срока данных Long Pull сервера - их получение и запуск цикла
      * @returns {Promise<R>|Promise.<T>|Promise}
      */
-    dialogsFetchLongPull() {
+    dialogsFetchLongPull(cb) {
         console.log('fetch pull working');
         // Если в этой сессии уже есть данные для LongPull сервера
-        if (this.socket.request.session['longPullServerData'] && Date.now() <= this.socket.request.session['longPullServerData'].time + 3600) {
+        if (this.socket.request.session['longPullServerData'] && Date.now() <= this.socket.request.session['longPullServerData'].time + 86400*1000) {
             return vkRequestBuilderServiceInstance.fetchLongPull(_.merge(this.socket.request.session['longPullServerData'], {
                 act: 'a_check',
                 wait: 25,
                 mode: 2
             })).then(updateData => {
-                console.log(updateData);
-                this.socket.request.session['longPullServerData']['ts'] = updateData['ts'];
-                this.socket.request.session['longPullServerData']['time'] = Date.now();
-                this.socket.request.session.save();
+                // Если сервер говорит, что ключ устарел
+                if (updateData.failed) {
+                    this._updateConnectionData({time: 0});
+                } else {
+                    this._updateConnectionData({time: Date.now(), ts: updateData['ts']});
 
-                let newMessages = [];
+                    let newMessages = [];
 
-                updateData.updates.forEach((updateItem) => {
+                    console.log(updateData);
 
-                    if (updateItem[0] == 4) {
-                        console.warn('Новое сообщение!');
-                        newMessages.push(updateItem);
-                    }
-                });
+                        updateData.updates.forEach((updateItem) => {
 
-                if (newMessages.length) {
-                    this._updateDialogs(newMessages);
+                            if (updateItem[0] == 4) {
+                                console.warn('Новое сообщение!');
+                                newMessages.push(updateItem);
+                            }
+                        });
+
+                        if (newMessages.length) {
+                            this._updateDialogs(newMessages);
+                        }
+
+                        // Не делаем бесконечный цикл на сервере, а отправляем клиенту сообщение, что запрос выполнен
+                        this.socket.emit('onDialogsFetchLongPullResponse');
+
                 }
-
-                this.dialogsFetchLongPull();
+                cb();
             }).catch({});
         } else {
             console.log('long pull else');
@@ -93,14 +100,9 @@ module.exports = class dialogService {
                 return vkRequestBuilderServiceInstance.fetchPromise(
                     'messages.getLongPollServer', token, {});
             }).then((data) => {
-                if (typeof data.failed == 'undefined') {
-                    this.socket.request.session['longPullServerData'] = _.merge(data, {
-                        time: Date.now()
-                    });
-                    this.socket.request.session.save(() => {
-                        this.dialogsFetchLongPull();
-                    });
-                }
+               // if (typeof data.failed == 'undefined') {
+                    this._updateConnectionData(_.merge(data, {time: Date.now()}), cb);
+               //  }
             }).catch(() => {
             });
         }
@@ -192,5 +194,14 @@ module.exports = class dialogService {
                     }
                 });
         });
+    }
+    /**
+     * Обновление данных соединения с Long Pull сервером
+     * @param params
+     * @private
+     */
+    _updateConnectionData(params) {
+        this.socket.request.session['longPullServerData'] = _.merge(this.socket.request.session['longPullServerData'], params);
+        this.socket.request.session.save();
     }
 };

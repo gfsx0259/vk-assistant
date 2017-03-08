@@ -1,28 +1,22 @@
 let _ = require('lodash');
+let passport = require('passport');
 let User = require('../../models/user').User;
-
-var passport = require('passport');
-
-passport.serializeUser((user, done) => {
-    done(null, user);
-});
-passport.deserializeUser(function (id, done) {
-    User.findById(id, (err, user) => {
-        err ? done(err) : done(null, user);
-    });
-});
 
 let LocalStrategy = require('../../middleware/passport/strategy');
 passport.use(new LocalStrategy({},
     (username, password, done, socket) => {
         User.findOne({username: username}, (err, user) => {
-            return err
-                ? done(err, null, null, socket)
-                : user
-                    ? password === user.password
+            if (err) {
+                return done(err, null, null, socket);
+            } else {
+                if (user) {
+                    password === user.password
                         ? done(null, user, null, socket)
                         : done(null, false, {message: 'Incorrect password.'}, socket)
-                    : done(null, false, {message: 'Incorrect username.'}, socket);
+                } else {
+                    done(null, false, {message: 'Incorrect username.'}, socket);
+                }
+            }
         });
     }
 ));

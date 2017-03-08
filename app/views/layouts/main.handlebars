@@ -9,9 +9,18 @@
 <script type="text/javascript">
     // make sure to use triple brackets
     var user = {{{userJson}}};
+
+    function send() {
+        io().emit('clients', 'data', function(serverData) {
+            console.log(serverData);
+        });
+    }
 </script>
 <div id="app" />
 <script type="text/javascript" src="/dist/bundle.js"></script>
+
+<button id="btn" onclick="send()">Button</button>
+
     {{{body}}}
 </body>
 </html>

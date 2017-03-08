@@ -20,9 +20,6 @@ export function fetch() {
                 payload: result.items
             });
             // Просим сервер ждать обновлений
-             dialogsService.fetchLongPull(result => {
-                 console.log(result);
-             });
         });
     };
 }

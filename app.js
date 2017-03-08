@@ -44,8 +44,24 @@ io.use(function(socket, next){
     sessionMiddleware(socket.request, {}, next);
 });
 
+let User = require('./app/models/user').User;
+
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+passport.deserializeUser((id, done) => {
+    User.findById(id, (err, user) => {
+        err ? done(err) : done(null, user);
+    });
+});
+
 // processing ws connections
 io.on('connection', (socket) => {
+
+    socket.on('clients', (data, cb) => {
+        cb('23');
+    });
+
     require('./app/controllers/ws/users').respond(socket);
     require('./app/controllers/ws/dialogs').respond(socket);
 });
