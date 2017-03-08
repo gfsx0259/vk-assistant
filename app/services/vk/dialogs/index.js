@@ -200,8 +200,11 @@ module.exports = class dialogService {
      * @param params
      * @private
      */
-    _updateConnectionData(params) {
-        this.socket.request.session['longPullServerData'] = _.merge(this.socket.request.session['longPullServerData'], params);
-        this.socket.request.session.save();
+    _updateConnectionData(params, cb) {
+        this.socket.request.session['longPullServerData'] = _.merge(
+            this.socket.request.session['longPullServerData'],
+            params
+        );
+        this.socket.request.session.save(cb);
     }
 };
