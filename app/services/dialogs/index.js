@@ -1,9 +1,9 @@
-let vkAuthorizingServiceInstance = require('../authorizing');
-let vkRequestBuilderService = require('../request/builder');
+let vkAuthorizingServiceInstance = require('../vk/authorizing');
+let vkRequestBuilderService = require('../vk/request/builder');
 let vkRequestBuilderServiceInstance = new vkRequestBuilderService();
 
-let Dialog = require('./../../../models/dialog');
-let Contact = require('./../../../models/contact').Contact;
+let Dialog = require('./../../models/dialog');
+let Contact = require('./../../models/contact').Contact;
 
 let _ = require('lodash');
 
@@ -201,6 +201,7 @@ class dialogService {
     /**
      * Обновление данных соединения с Long Pull сервером
      * @param params
+     * @param cb
      * @private
      */
     _updateConnectionData(params, cb) {

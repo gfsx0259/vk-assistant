@@ -1,9 +1,11 @@
 import {
-    SAVE_MAPPING_REQUEST
+    SAVE_MAPPING_REQUEST,
+    SAVE_MAPPING_RESPONSE
 } from '../constants/profile'
 
 const initialState = {
-    mapped: false
+    contact: {},
+    processing: false
 };
 
 export default (state = initialState, action) => {
@@ -14,6 +16,9 @@ export default (state = initialState, action) => {
         case SAVE_MAPPING_REQUEST:
             console.log('SAVE_MAPPING_REQUEST reducer');
             return Object.assign({}, state, {processing: true});
+        case SAVE_MAPPING_RESPONSE:
+            console.log('SAVE_MAPPING_RESPONSE reducer');
+            return Object.assign({}, state, {processing: false, contact: action.payload});
         default:
             return state;
     }

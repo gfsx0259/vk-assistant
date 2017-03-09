@@ -62,7 +62,8 @@ io.on('connection', (socket) => {
         cb('23');
     });
 
-    require('./app/controllers/ws/users').respond(socket);
+    require('./app/controllers/ws/profile').respond(socket);
+    require('./app/controllers/ws/user').respond(socket);
     require('./app/controllers/ws/dialogs').respond(socket);
 });
 

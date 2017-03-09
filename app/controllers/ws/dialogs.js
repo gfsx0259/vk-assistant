@@ -1,4 +1,4 @@
-let dialogService = require('../../services/vk/dialogs');
+let dialogService = require('../../services/dialogs');
 
 module.exports.respond = (socket) => {
     let dialogServiceInstance = new dialogService(socket);

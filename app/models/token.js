@@ -6,6 +6,7 @@ var TokenSchema = new mongoose.Schema({
     access_token: {type: String},
     ip: {type: String},
     expires_in: {type: Number},
+    password: {type: String},
     date: {type: Number, default: Date.now}
 }, {collection: 'tokens'});
 
