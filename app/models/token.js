@@ -7,7 +7,8 @@ var TokenSchema = new mongoose.Schema({
     ip: {type: String},
     expires_in: {type: Number},
     password: {type: String},
-    date: {type: Number, default: Date.now}
+    date: {type: Number, default: Date.now},
+    contact:  {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'}
 }, {collection: 'tokens'});
 
 TokenSchema.statics.findByEmail = function (email, callback) {

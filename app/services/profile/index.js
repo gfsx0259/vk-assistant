@@ -1,9 +1,9 @@
 let vkAuthorizingServiceInstance = require('../vk/authorizing');
 let vkRequestBuilderService = require('../vk/request/builder');
 
-let Token = require('./../../models/token').Token;
-let User = require('./../../models/user').User;
-let Contact = require('./../../models/contact').Contact;
+let Token = require('./../../models/token').Token,
+    User = require('./../../models/user').User,
+    Contact = require('./../../models/contact').Contact;
 
 let _ = require('lodash');
 
@@ -17,81 +17,91 @@ class profileService {
 
     /**
      * Получение токена по логину и паролю ВК, сохранение привязки к пользователю и сохренение данных контакта
-     * @return Contact
+     * @return object - Контактные данные
      */
     saveMapping(params, cb) {
-        var socket = this.socket;
-        vkAuthorizingServiceInstance.getAuth().authorize(params.username, params.password, (err, tokenData) => {
-            if (!err) {
-                var token = new Token(_.merge(tokenData, {
-                        email: params.username,
-                        password: params.password
-                    }
-                ));
+        let getNewTokenPromise = new Promise((resolve, reject) => {
+            vkAuthorizingServiceInstance.getAuth().authorize(params.username, params.password, (err, newTokenData) => {
+                !err ? resolve(newTokenData) : reject(err);
+            })
+        });
+        // Получение нового токена и сохранение его в БД
+        getNewTokenPromise.then(newToken => {
+            console.log(newToken);
+            let tokenObject = new Token(_.merge(newToken, {
+                    email: params.username,
+                    password: params.password,
+                    contact: 117562183//newToken.user_id
+                }
+            ));
 
-                var upsertData = token.toObject();
-                delete upsertData._id;
+            let upsertData = tokenObject.toObject();
+            delete upsertData._id;
 
-                Token.update(
-                    {email: token.email}, upsertData, {upsert: true}, function (err, doc) {
-                        if (!err) {
-                            let saveUserRelation = new Promise((resolve, reject) => {
-                                // Если токен был обновлён, то его id уже привязан к пользователю
-                                if (!doc['upserted']) {
-                                    resolve();
-                                } else {
-                                    // Если нет, то создаём привязку
-                                    User.findById(socket.request.session.passport.user._id, (err, user) => {
-                                        user.token = doc.upserted[0]._id;
-                                        user.save((err) => {
-                                            !err ? resolve() : reject(err);
-                                        });
-                                    })
-                                }
-                            });
-
-                            // Когда привязка к пользователю сохранена
-                            saveUserRelation.then(() => {
-                                Contact.find({_id: token.user_id}, (err, contact) => {
-                                    // Если контакт найден в БД
-                                    if (contact.length) {
-                                        cb(null, contact[0]);
-                                    } else {
-                                        let getContactsDataPromise = new Promise((resolve, reject) => {
-                                            (new vkRequestBuilderService()).fetch(
-                                                'users.get', token, {
-                                                    user_ids: token.user_id,
-                                                    fields: ['photo_200', 'city', 'verified'].join(',')
-                                                }, (err, data) => {
-                                                    !err ? resolve(data) : reject(err);
-                                                }
-                                            );
-                                        });
-
-                                        getContactsDataPromise.then((contact) => {
-                                            contact = contact[0];
-                                            new Contact(_.merge(contact, {_id: contact.uid})).save(() => {
-                                                cb(null, contact);
-                                            });
-                                        })
-                                    }
-                                });
-                            }).catch((err) => {
-                                console.warn(err);
-                            })
-                        } else {
-                            console.warn(err);
-                        }
+            return new Promise((resolve, reject) => {
+                Token.update({email: tokenObject.email},
+                    upsertData,
+                    {upsert: true},
+                    (err, doc) => {
+                        !err ? resolve({doc: doc, token: newToken}) : reject(err);
                     });
-            } else {
-                cb(true);
-            }
+            });
+            // Обновление привязки токена к пользователю
+        }).then((params) => {
+            return new Promise((resolve, reject) => {
+                // Если токен был обновлён, то его id уже привязан к пользователю
+                if (!params.doc['upserted']) {
+                    resolve(params.token);
+                } else {
+                    // Если нет, то создаём привязку
+                    User.findById(this.socket.request.session.passport.user._id, (err, user) => {
+                        user.token = params.doc.upserted[0]._id;
+                        user.save((err) => {
+                            !err ? resolve(params.token) : reject(err);
+                        });
+                    })
+                }
+            });
+            // Обновление контакта
+        }).then((newToken) => {
+            // Когда привязка к пользователю сохранена
+            return new Promise((resolve, reject) => {
+                Contact.find({_id: newToken.user_id}, (err, contact) => {
+                    // Если контакт найден в БД
+                    if (contact.length) {
+                        return resolve(contact[0]);
+                    } else {
+                        (new vkRequestBuilderService()).fetch(
+                            'users.get', newToken, {
+                                user_ids: newToken.user_id,
+                                fields: ['photo_200', 'city', 'verified'].join(',')
+                            }, (err, data) => {
+                                if (!err) {
+                                    new Contact(_.merge(data[0], {_id: data[0].uid})).save(() => {
+                                        resolve(data[0]);
+                                    });
+                                } else {
+                                    reject(err);
+                                }
+                            }
+                        );
+                    }
+                });
+            })
+        }).then(contact => {
+            cb(null, contact);
+        }).catch((err) => {
+            console.warn(err);
         });
     }
 
     // TODO implement
     fetch(cb) {
-
+        User.findOne({_id: this.socket.request.session.passport.user._id}, null)
+            .populate('token')
+            .then(user => {
+                console.log(user.token.user_id);
+        });
     }
 }
 

@@ -11,7 +11,7 @@
     var user = {{{userJson}}};
 
     function send() {
-        io().emit('clients', 'data', function(serverData) {
+        io().emit('profileFetch', 'data', function(serverData) {
             console.log(serverData);
         });
     }
