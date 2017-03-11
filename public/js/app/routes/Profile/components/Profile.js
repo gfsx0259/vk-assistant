@@ -6,7 +6,7 @@ import * as profileActions from '../../../actions/profile'
 
 class Profile extends Component {
     componentDidMount() {
-
+        this.props.fetchContact();
     }
     handleSubmit(event) {
         event.preventDefault();

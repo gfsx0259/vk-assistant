@@ -27,11 +27,9 @@ class profileService {
         });
         // Получение нового токена и сохранение его в БД
         getNewTokenPromise.then(newToken => {
-            console.log(newToken);
             let tokenObject = new Token(_.merge(newToken, {
                     email: params.username,
-                    password: params.password,
-                    contact: 117562183//newToken.user_id
+                    password: params.password
                 }
             ));
 
@@ -95,13 +93,18 @@ class profileService {
         });
     }
 
-    // TODO implement
+    /**
+     * Получение данных контакта ВК текущего пользователя по связке User->Token->Contact
+     * @param cb
+     */
     fetch(cb) {
-        User.findOne({_id: this.socket.request.session.passport.user._id}, null)
+        User.findOne({_id: this.socket.request.session.passport.user._id})
             .populate('token')
             .then(user => {
-                console.log(user.token.user_id);
-        });
+                Contact.findOne({_id: user.token.user_id}).then((contact) => {
+                    cb(contact);
+                })
+            });
     }
 }
 
