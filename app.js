@@ -104,6 +104,6 @@ app.get('/services/send', ServicesController.getHandler('send'));
 app.post('/services/setLike', ServicesController.getHandler('setLike'));
 app.get('/services/photos', ServicesController.getHandler('photos'));
 
-http.listen(3000, function () {
+http.listen(process.env.PORT || 3000, function () {
     console.log('Example app listening on port 3000!')
 });
