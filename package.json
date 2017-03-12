@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "webpack -d --watch",
-    "build": "webpack -p"
+    "build": "webpack -p",
+    "postinstall": "npm run build"
   },
   "author": "Konstantin Popov",
   "license": "BSD-2-Clause",
