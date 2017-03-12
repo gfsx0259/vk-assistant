@@ -23,7 +23,7 @@ expressSession = require("express-session");
 var sessionMiddleware = expressSession({
     secret: "vk-assistant",
     store: new (require("connect-mongo")(expressSession))({
-        url: "mongodb://localhost/vk-assistant"
+        url: "mongodb://v8199:qwerty@ds141078.mlab.com:41078/heroku_d4pz7l73"
     }),
     resave: true,
     saveUninitialized: true
