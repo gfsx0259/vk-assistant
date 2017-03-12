@@ -20,7 +20,7 @@ class dialogService {
      */
     dialogsFetch(cb) {
         let actualizeTokenPromise = new Promise((resolve, reject) => {
-            vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+            vkAuthorizingServiceInstance.actualizeToken(this.socket.request.session.passport.user._id, (err, token) => {
                 !err ? resolve(token) : reject(err);
             })
         });
@@ -94,7 +94,7 @@ class dialogService {
 
             // Если нету, то получаем их и вызываем метод ещё раз
             new Promise((resolve, reject) => {
-                vkAuthorizingServiceInstance.actualizeToken((err, token) => {
+                vkAuthorizingServiceInstance.actualizeToken(this.socket.request.session.passport.user._id, (err, token) => {
                     !err ? resolve(token) : reject(err);
                 })
             }).then((token) => {
@@ -119,7 +119,7 @@ class dialogService {
     _dialogsFetchInit(cb) {
         // Первоначальное получение диалогов и контактов из базы
         let actualizeTokenPromise = new Promise((resolve, reject) => {
-            vkAuthorizingServiceInstance.actualizeToken((err, token) => {
+            vkAuthorizingServiceInstance.actualizeToken(this.socket.request.session.passport.user._id, (err, token) => {
                 !err ? resolve(token) : reject(err);
             })
         });

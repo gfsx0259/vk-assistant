@@ -1,55 +1,67 @@
-var vkAuth = require('vk-auth');
-var ip = require("ip");
+let vkAuth = require('vk-auth');
+let ip = require("ip");
+let _ = require('lodash');
 
-// Include config
-var Token = require('./../../models/token').Token;
-var Config = require('./../../config/main');
+// Include models
+let Token = require('./../../models/token').Token,
+    User = require('./../../models/user').User,
+    Config = require('./../../config/main');
 
-/**
- *
- * @param appId
- */
-var vkAuthorizingService = function (appId) {
-    this.appId = appId;
-};
 
-vkAuthorizingService.prototype = {
+class vkAuthorizingService {
+    constructor(appId) {
+        this.appId = appId;
+    }
+
     /**
      * Объект, выполняющий авторизацию
      * @param scopes
      * @returns {*}
      */
-    getAuth: function (scopes) {
+    getAuth(scopes) {
         return vkAuth(this.appId, scopes || ['messages', 'photos', 'wall']);
-    },
+    }
+
     /**
      * Вызывает callback, в качестве параметра передаёт токен
+     * @param userId
      * @param cb
      */
-    actualizeToken: function (cb) {
-        Token.findByEmail(Config.user.credentials.email, function (err, token) {
+    actualizeToken(userId, cb) {
+        let findUserPromise = User
+            .findOne({_id: userId})
+            .populate('token');
+
+        findUserPromise.then((user) => {
+            // Если токена не существует - значит ещё нет привязки
+            if (!user.token) {
+                return false;
+            }
             // Самостоятельно проверяем токен
-            if (token && token.ip == ip.address() && parseInt(token.date) + (token.expires_in * 1000) > Date.now()) {
-                cb(null, token);
+            if (user.token && user.token.ip == ip.address() && parseInt(user.token.date) + (user.token.expires_in * 1000) > Date.now()) {
+                cb(null, user.token);
             } else {
-                this.getAuth().authorize(Config.user.credentials.email, Config.user.credentials.password, function (err, token) {
-console.log(arguments);
-console.log('try');
+                this.getAuth().authorize(user.token.email, user.token.password, (err, token) => {
+
                     // Save to db token collection
-                    token.ip = ip.address();
-                    token.date = Date.now();
-                    token.email = Config.user.credentials.email;
+                    token = _.merge(token, {
+                        ip: ip.address(),
+                        date: Date.now(),
+                        email: user.token.email
+                    });
 
                     Token.findOneAndUpdate(
-                        {email: token['email']}, token, {upsert: true}, function(err, doc){
-                        if(!err){
-                            cb(null, token);
-                        }
-                    });
+                        {email: user.token.email}, token, {upsert: true}, (err) => {
+                            if (!err) {
+                                cb(null, token);
+                            }
+                        });
                 });
             }
-        }.bind(this));
+        }).catch(err => {
+            console.warn(err);
+        });
     }
-};
+}
 
 module.exports = new vkAuthorizingService(Config.application.id);

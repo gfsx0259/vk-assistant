@@ -142,7 +142,7 @@ var services = function () {
 services.prototype = {
     getHandler: function (name) {
         return function (req, res) {
-            vkAuthorizingServiceInstance.actualizeToken(function (err, token) {
+            vkAuthorizingServiceInstance.actualizeToken(req.session.passport.user._id, function (err, token) {
                 if (!err) {
                     servicesList[name].call(this, req, res, token);
                 } else {
