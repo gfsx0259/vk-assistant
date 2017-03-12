@@ -74,6 +74,7 @@ class profileService {
                                 user_ids: newToken.user_id,
                                 fields: ['photo_200', 'city', 'verified'].join(',')
                             }, (err, data) => {
+                                console.log(err, data);
                                 if (!err) {
                                     new Contact(_.merge(data[0], {_id: data[0].uid})).save(() => {
                                         resolve(data[0]);
