@@ -10,7 +10,8 @@ bootstrap.prototype = {
     db: function () {
         // initialize database connection
         mongoose.Promise = global.Promise;
-        mongoose.connect('mongodb://localhost/vk-assistant');
+       // mongoose.connect('mongodb://localhost/vk-assistant');
+        mongoose.connect('mongodb://v8199:qwerty@ds141078.mlab.com:41078/heroku_d4pz7l73');
     },
     middleware: function (app) {
         app.engine('hbs', hbs(
