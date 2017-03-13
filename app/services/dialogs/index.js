@@ -126,7 +126,11 @@ class dialogService {
 
         actualizeTokenPromise
             .then((token) => {
+            console.log('token', token);
                 vkRequestBuilderServiceInstance.fetch('messages.getDialogs', token, {offset: 0}, function (err, items) {
+
+                   console.log(err, items);
+
                     // После получения всех диалогов, получим все данные контактов
                     let getContactsDataPromise = new Promise((resolve, reject) => {
                         vkRequestBuilderServiceInstance.fetch(
