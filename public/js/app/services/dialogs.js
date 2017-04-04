@@ -6,5 +6,11 @@ module.exports = {
         socket.call('dialogsFetch', {}, (data) => {
             cb(data)
         });
+    },
+    fetchMessages(uid, cb) {
+        socket.addHandler('onMessagesFetchResponse', cb);
+        socket.call('messagesFetch', {uid: uid}, (data) => {
+            cb(data)
+        });
     }
 };

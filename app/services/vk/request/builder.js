@@ -35,7 +35,6 @@ vkRequestBuilderService.prototype = {
                 // If response is correct
                 if (!error && response.statusCode == 200) {
                     body = JSON.parse(body);
-                    console.log('body', body, 'resp', response);
 
                     // Check auth error
                     if (!body.error) {

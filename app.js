@@ -15,6 +15,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.use(express.static('public/js'));
+app.use(express.static('public/css'));
 
 app.set('json spaces', 40);
 

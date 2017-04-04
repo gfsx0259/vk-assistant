@@ -35,4 +35,11 @@ module.exports.respond = (socket) => {
             loop();
         }
     });
+
+    socket.on('messagesFetch', (data, cb) => {
+
+        dialogServiceInstance.messagesFetch(data.uid, cb);
+        console.log('messages fetch', data);
+    })
+
 };

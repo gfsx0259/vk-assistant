@@ -32,6 +32,16 @@ styles.list = {
     listStyleType: 'none'
 };
 
+styles.dialogsList = {
+    float: 'left',
+    width: '400px'
+};
+
+styles.messagesList = {
+    float: 'left',
+    width: '700px'
+};
+
 class Dialogs extends Component {
     constructor(props) {
         super(props);
@@ -44,9 +54,14 @@ class Dialogs extends Component {
         this.props.fetch();
     }
 
+    showMessages(uid)
+    {
+        this.props.fetchMessages(uid);
+    }
+
     render() {
         <div>{this.props.dialogs.processing ? 'Загрузка' : '+++'}</div>
-        var dialogs = this.props.dialogs.list.map(function (dialog) {
+        var dialogs = this.props.dialogs.list.map((dialog) => {
             return (
                 <li key={dialog.uid}>
                     <div style={styles.dialogRowLeft}>
@@ -55,6 +70,7 @@ class Dialogs extends Component {
                     <div style={styles.dialogRowRight}>
                         <b style={styles.userName}>{dialog.contact.first_name} {dialog.contact.last_name} </b>
                         <Link to={`photos/${dialog.uid}`}>[Фотографии]</Link>
+                        <button onClick={this.showMessages.bind(this, dialog.uid)}>Msg</button>
                         <p>{dialog.body}</p>
                     </div>
                     <form action="/services/send" method="get">
@@ -67,7 +83,17 @@ class Dialogs extends Component {
         });
         return (
             <div>
-                <ul style={styles.list}>{dialogs}</ul>
+                <div style={styles.dialogsList}><ul style={styles.list}>{dialogs}</ul></div>
+                <div style={styles.messagesList}>{this.props.dialogs.selectedDialogUid && this.props.dialogs.messages.length
+                && <div>
+                    <ul>
+                        {this.props.dialogs.messages.map((msg) => {
+                            return <li key={msg.mid}>{msg.body}</li>
+                        })}
+                    </ul>
+                </div>
+                }</div>
+
             </div>
         )
     }

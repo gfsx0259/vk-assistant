@@ -3,6 +3,7 @@ let vkRequestBuilderService = require('../vk/request/builder');
 let vkRequestBuilderServiceInstance = new vkRequestBuilderService();
 
 let Dialog = require('./../../models/dialog');
+let Message = require('./../../models/message');
 let Contact = require('./../../models/contact').Contact;
 
 let _ = require('lodash');
@@ -13,6 +14,43 @@ class dialogService {
      */
     constructor(socket) {
         this.socket = socket;
+    }
+
+    messagesFetch(uid, cb) {
+        Message.find({uid: uid}, null, {sort: {date: -1}}).then((messages) => {
+            // Если в базе уже есть диалоги, сразу отдаём их, обновления получим потом
+            if (messages.length > 0) {
+                // Возвращаем данные через callback socket.io
+                if (cb) {
+                    cb({items: messages});
+                }
+            } else {
+                console.log('_messagesFetchInit');
+                this._messagesFetchInit();
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
+    _messagesFetchInit() {
+
+        let actualizeTokenPromise = new Promise((resolve, reject) => {
+            vkAuthorizingServiceInstance.actualizeToken(this.socket.request.session.passport.user._id, (err, token) => {
+                !err ? resolve(token) : reject(err);
+            })
+        });
+
+        actualizeTokenPromise.then(token => {
+            vkRequestBuilderServiceInstance.fetch('messages.get', token, {count: 200}, function (err, items) {
+                let BulkContacts = Message.collection.initializeUnorderedBulkOp();
+                items.forEach(function (value) {
+                    value._id = value.mid;
+                    BulkContacts.find({_id: value.mid}).upsert().update({'$set': value});
+                });
+                BulkContacts.execute();
+            });
+        });
     }
 
     /**
@@ -101,8 +139,9 @@ class dialogService {
                 return vkRequestBuilderServiceInstance.fetchPromise(
                     'messages.getLongPollServer', token, {});
             }).then((data) => {
-                this._updateConnectionData(_.merge(data, {time: Date.now()}), cb);
-            }).catch(() => {
+                this._updateConnectionData(_.merge(data, {time: Date.now()}));
+            }).catch((err) => {
+                console.warn(err);
             });
         }
 
@@ -165,7 +204,7 @@ class dialogService {
                             // Вставляем/обновляем записи по пользователю с которым ведётся диалог
                             BulkDialogs.find({
                                 uid: value.uid,
-                                from_uid: value.from_uid
+                                from_uid: token.user_id
                             }).upsert().update({'$set': value});
                         });
                         BulkDialogs.execute(cb);
